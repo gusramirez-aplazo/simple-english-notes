@@ -23,4 +23,10 @@ func RunMigrations() {
 	if relevantQuestionErr != nil {
 		log.Fatal(relevantQuestionErr)
 	}
+
+	categoryErr := database.Client.AutoMigrate(Category{})
+
+	if categoryErr != nil {
+		log.Fatal(categoryErr)
+	}
 }
