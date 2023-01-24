@@ -22,6 +22,11 @@ func init() {
 		log.Fatal(recallPromptErr)
 	}
 
+	relevantQuestionErr := database.Client.AutoMigrate(models.RelevantQuestion{})
+
+	if relevantQuestionErr != nil {
+		log.Fatal(relevantQuestionErr)
+	}
 }
 
 func main() {
