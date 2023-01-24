@@ -29,4 +29,10 @@ func RunMigrations() {
 	if categoryErr != nil {
 		log.Fatal(categoryErr)
 	}
+
+	noteErr := database.Client.AutoMigrate(Note{})
+
+	if noteErr != nil {
+		log.Fatal(noteErr)
+	}
 }
