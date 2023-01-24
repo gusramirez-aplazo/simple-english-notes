@@ -12,6 +12,12 @@ func RunMigrations() {
 		log.Fatal(topicMigrationErr)
 	}
 
+	noteErr := database.Client.AutoMigrate(Note{})
+
+	if noteErr != nil {
+		log.Fatal(noteErr)
+	}
+
 	recallPromptErr := database.Client.AutoMigrate(RecallPrompt{})
 
 	if recallPromptErr != nil {

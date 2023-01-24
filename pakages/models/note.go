@@ -2,10 +2,10 @@ package models
 
 import "gorm.io/gorm"
 
-type RecallPrompt struct {
+type Note struct {
 	gorm.Model
 
 	ID    uint   `gorm:"primaryKey; autoIncrement; not null; unique_index"`
-	Title string `gorm:"not null; unique; var(100)"`
-	Notes []Note `gorm:"foreignKey:ID"`
+	Title string `gorm:"var(100)"`
+	Text  string `gorm:"string"`
 }
