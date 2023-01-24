@@ -7,4 +7,5 @@ type RecallPrompt struct {
 
 	ID    uint   `gorm:"primaryKey; autoIncrement; not null; unique_index"`
 	Title string `gorm:"not null; unique; var(100)"`
+	Notes []Note `gorm:"foreignKey:ID"`
 }
