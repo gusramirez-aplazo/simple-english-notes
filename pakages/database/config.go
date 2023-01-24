@@ -31,13 +31,14 @@ func init() {
 }
 
 func Connect() {
-	var err error
-	Client, err = gorm.Open(postgres.Open(psqlDSN))
+	client, err := gorm.Open(postgres.Open(psqlDSN))
 
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
+
+	Client = client
 
 	log.Println("Database connected")
 }

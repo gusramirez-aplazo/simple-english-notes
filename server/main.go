@@ -16,6 +16,12 @@ func init() {
 		log.Fatal(topicMigrationErr)
 	}
 
+	recallPromptErr := database.Client.AutoMigrate(models.RecallPrompt{})
+
+	if recallPromptErr != nil {
+		log.Fatal(recallPromptErr)
+	}
+
 }
 
 func main() {
