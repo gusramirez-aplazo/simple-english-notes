@@ -6,10 +6,10 @@ on:
       - main
 
 env:
-  NOTES_DBNAME=${{ secrets.NOTES_DBNAME }}
-  NOTES_HOST=${{ secrets.NOTES_HOST }}
-  NOTES_USER=${{ secrets.NOTES_USER }}
-  NOTES_PASS=${{ secrets.NOTES_PASS }}
+  NOTES_DBNAME: ${{ secrets.NOTES_DBNAME }}
+  NOTES_HOST: ${{ secrets.NOTES_HOST }}
+  NOTES_USER: ${{ secrets.NOTES_USER }}
+  NOTES_PASS: ${{ secrets.NOTES_PASS }}
 
 jobs:
   build:
