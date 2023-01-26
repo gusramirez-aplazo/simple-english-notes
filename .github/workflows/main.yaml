@@ -53,4 +53,4 @@ jobs:
         run: doctl registry login --expiry-seconds 600
 
       - name: Run image on droplet
-        run: doctl compute ssh $DROPLET_NAME --ssh-command "docker run -d -p 80:3000 --name registry.digitalocean.com/gus/english-notes:$(echo $GITHUB_SHA | head -c7)"
+        run: doctl compute ssh $DROPLET_NAME --ssh-command "docker run -p 80:3000 --name registry.digitalocean.com/gus/english-notes:$(echo $GITHUB_SHA | head -c7) -d"
