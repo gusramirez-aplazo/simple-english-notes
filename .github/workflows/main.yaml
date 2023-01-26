@@ -10,7 +10,8 @@ env:
   NOTES_HOST: ${{ secrets.NOTES_HOST }}
   NOTES_USER: ${{ secrets.NOTES_USER }}
   NOTES_PASS: ${{ secrets.NOTES_PASS }}
-
+  DROPLET_NAME: ${{ secrets.DROPLET_NAME }}
+  
 jobs:
   build:
 
@@ -52,4 +53,4 @@ jobs:
         run: doctl registry login --expiry-seconds 600
 
       - name: Run image on droplet
-        run: doctl compute ssh ${{ secrets.DROPLET_NAME }} --ssh-command docker run -d -p 80:3000 --name registry.digitalocean.com/gus/english-notes:$(echo $GITHUB_SHA | head -c7)
+        run: doctl compute ssh $DROPLET_NAME --ssh-command docker run -d -p 80:3000 --name registry.digitalocean.com/gus/english-notes:$(echo $GITHUB_SHA | head -c7)
