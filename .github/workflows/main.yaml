@@ -20,9 +20,6 @@ jobs:
       - name: Checkout files
         uses: actions/checkout@v2
 
-      - name: Update SHA
-        run: echo $GITHUB_SHA > $GITHUB_WORKSPACE/site/_meta
-
       - name: Build container image
         run: docker build -t registry.digitalocean.com/gus/english-notes:$(echo $GITHUB_SHA | head -c7) .
 
