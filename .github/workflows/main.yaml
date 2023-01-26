@@ -1,0 +1,58 @@
+name: english-notes ci
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  NOTES_DBNAME=${{ secrets.NOTES_DBNAME }}
+  NOTES_HOST=${{ secrets.NOTES_HOST }}
+  NOTES_USER=${{ secrets.NOTES_USER }}
+  NOTES_PASS=${{ secrets.NOTES_PASS }}
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout files
+        uses: actions/checkout@v2
+
+      - name: Update SHA
+        run: echo $GITHUB_SHA > $GITHUB_WORKSPACE/site/_meta
+
+      - name: Build container image
+        run: docker build -t registry.digitalocean.com/gus/english-notes:$(echo $GITHUB_SHA | head -c7) .
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.CONTAINER_REGISTRY_TOKEN }}
+
+      - name: Log in to DigitalOcean Container Registry with short-lived credentials
+        run: doctl registry login --expiry-seconds 600
+
+      - name: Push image to DigitalOcean Container Registry
+        run: docker push registry.digitalocean.com/gus/english-notes:$(echo $GITHUB_SHA | head -c7)
+
+  deploy:
+    needs: build
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout files
+        uses: actions/checkout@v2
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.CONTAINER_REGISTRY_TOKEN }}
+
+      - name: Log in to DigitalOcean Container Registry with short-lived credentials
+        run: doctl registry login --expiry-seconds 600
+
+      - name: Run image on droplet
+        run: doctl compute ssh ${{ secrets.DROPLET_NAME }} --ssh-command docker run -d -p 80:3000 --name registry.digitalocean.com/gus/english-notes:$(echo $GITHUB_SHA | head -c7)
