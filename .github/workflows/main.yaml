@@ -13,7 +13,8 @@ env:
   DROPLET_NAME: ${{ secrets.DROPLET_NAME }}
   REGISTRY: "registry.digitalocean.com/gus"
   IMAGE_NAME: "english-notes"
-  CONTAINER_PORT_TO_PORT: ${{ secrets.CONTAINER_PORT_TO_PORT }}
+  EXPOSED_PORT: ${{ secrets.EXPOSED_PORT }}
+  CONTAINER_PORT: ${{ secrets.CONTAINER_PORT }}
 
 jobs:
   build_and_push:
@@ -64,7 +65,7 @@ jobs:
             # Run a new container from a new image
             docker run -d \
             --restart always \
-            -p $(echo $CONTAINER_PORT_TO_PORT) \
+            -p $(echo $EXPOSED_PORT):$(echo $CONTAINER_PORT) \
             --env NOTES_HOST=$(echo $NOTES_HOST) \
             --env NOTES_DBNAME=$(echo $NOTES_DBNAME) \
             --env NOTES_USER=$(echo $NOTES_USER) \
