@@ -65,9 +65,9 @@ jobs:
             docker run -d \
             --restart always \
             -p $(echo $CONTAINER_PORT_TO_PORT) \
-            -e NOTES_HOST=$(echo $NOTES_HOST) \
-            -e NOTES_DBNAME=$(echo $NOTES_DBNAME) \
-            -e NOTES_USER=$(echo $NOTES_USER) \
-            -e NOTES_PASS=$(echo $NOTES_PASS) \
+            --env NOTES_HOST=$(echo $NOTES_HOST) \
+            --env NOTES_DBNAME=$(echo $NOTES_DBNAME) \
+            --env NOTES_USER=$(echo $NOTES_USER) \
+            --env NOTES_PASS=$(echo $NOTES_PASS) \
             --name $(echo $IMAGE_NAME) \
             $(echo $REGISTRY)/$(echo $IMAGE_NAME):$(echo $GITHUB_SHA | head -c7)
