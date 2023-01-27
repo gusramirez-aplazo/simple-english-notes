@@ -54,7 +54,7 @@ jobs:
           host: ${{ secrets.DROPLET_HOST }}
           username: ${{ secrets.DROPLET_USERNAME }}
           key: ${{ secrets.SSH_TOKEN }}
-          envs: IMAGE_NAME,REGISTRY,{{ secrets.CONTAINER_REGISTRY_TOKEN }},GITHUB_SHA
+          envs: IMAGE_NAME,EXPOSED_PORT,CONTAINER_PORT,NOTES_HOST,NOTES_DBNAME,NOTES_USER,NOTES_PASS,REGISTRY,{{ secrets.CONTAINER_REGISTRY_TOKEN }},GITHUB_SHA
           script: |
             # Login to registry
             docker login -u ${{ secrets.CONTAINER_REGISTRY_USERNAME }} -p ${{ secrets.CONTAINER_REGISTRY_TOKEN }} registry.digitalocean.com
