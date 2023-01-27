@@ -11,7 +11,6 @@ env:
   NOTES_USER: ${{ secrets.NOTES_USER }}
   NOTES_PASS: ${{ secrets.NOTES_PASS }}
   DROPLET_NAME: ${{ secrets.DROPLET_NAME }}
-  SSH_TOKEN: ${{ secrets.SSH_TOKEN }}
   REGISTRY: "registry.digitalocean.com/gus"
   IMAGE_NAME: "english-notes"
 
@@ -53,7 +52,7 @@ jobs:
           envs: IMAGE_NAME,REGISTRY,{{ secrets.CONTAINER_REGISTRY_TOKEN }},GITHUB_SHA
           script: |
             # Login to registry
-            docker login -u ${{ secrets.CONTAINER_REGISTRY_TOKEN }} -p ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }} registry.digitalocean.com
+            docker login -u ${{ secrets.CONTAINER_REGISTRY_USERNAME }} -p ${{ secrets.CONTAINER_REGISTRY_TOKEN }} registry.digitalocean.com
             # Stop running container
             docker stop $(echo $IMAGE_NAME)
             # Remove old container
