@@ -11,8 +11,8 @@ env:
   NOTES_USER: ${{ secrets.NOTES_USER }}
   NOTES_PASS: ${{ secrets.NOTES_PASS }}
   DROPLET_NAME: ${{ secrets.DROPLET_NAME }}
-  REGISTRY: "registry.digitalocean.com"
-  IMAGE_NAME: "gus/english-notes"
+  REGISTRY: "registry.digitalocean.com/gus"
+  IMAGE_NAME: "english-notes"
 
 jobs:
   build_and_push:
