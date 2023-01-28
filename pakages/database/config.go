@@ -10,7 +10,7 @@ import (
 
 var psqlDSN string
 
-var Client *gorm.DB
+var client *gorm.DB
 
 func init() {
 
@@ -31,14 +31,18 @@ func init() {
 }
 
 func Connect() {
-	client, err := gorm.Open(postgres.Open(psqlDSN))
+	pgClient, err := gorm.Open(postgres.Open(psqlDSN))
 
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
 
-	Client = client
+	client = pgClient
 
 	log.Println("Database connected")
+}
+
+func GetDbClient() *gorm.DB {
+	return client
 }

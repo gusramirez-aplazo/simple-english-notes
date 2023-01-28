@@ -13,7 +13,7 @@ import (
 
 func init() {
 	database.Connect()
-	models.RunMigrations()
+	models.RunMigrations(database.GetDbClient())
 }
 
 func main() {
@@ -23,7 +23,7 @@ func main() {
 
 	controller := &controllers.Controller{}
 
-	routes.Start(router, controller)
+	routes.Start(router, controller, database.GetDbClient())
 
 	fmt.Printf("Server listen on port: %v", port)
 

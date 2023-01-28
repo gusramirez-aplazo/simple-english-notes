@@ -1,6 +1,9 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+	"log"
+)
 
 type Note struct {
 	gorm.Model
@@ -8,4 +11,12 @@ type Note struct {
 	ID          uint   `gorm:"primaryKey; autoIncrement; not null; unique_index"`
 	Title       string `gorm:"type:varchar(100)"`
 	Description string
+}
+
+func (note Note) RunMigration(clientDB *gorm.DB) {
+	noteErr := clientDB.AutoMigrate(Note{})
+
+	if noteErr != nil {
+		log.Fatal(noteErr)
+	}
 }
