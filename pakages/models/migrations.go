@@ -1,44 +1,19 @@
 package models
 
 import (
-	"github.com/gusramirez-aplazo/simple-english-notes/pakages/database"
-	"log"
+	"gorm.io/gorm"
 )
 
-func RunMigrations() {
-	topicMigrationErr := database.Client.AutoMigrate(Topic{})
+func RunMigrations(clientDB *gorm.DB) {
+	Topic{}.RunMigration(clientDB)
 
-	if topicMigrationErr != nil {
-		log.Fatal(topicMigrationErr)
-	}
+	Category{}.RunMigration(clientDB)
 
-	noteErr := database.Client.AutoMigrate(Note{})
+	Note{}.RunMigration(clientDB)
 
-	if noteErr != nil {
-		log.Fatal(noteErr)
-	}
+	RecallPrompt{}.RunMigration(clientDB)
 
-	recallPromptErr := database.Client.AutoMigrate(RecallPrompt{})
+	RelevantQuestion{}.RunMigration(clientDB)
 
-	if recallPromptErr != nil {
-		log.Fatal(recallPromptErr)
-	}
-
-	relevantQuestionErr := database.Client.AutoMigrate(RelevantQuestion{})
-
-	if relevantQuestionErr != nil {
-		log.Fatal(relevantQuestionErr)
-	}
-
-	categoryErr := database.Client.AutoMigrate(Category{})
-
-	if categoryErr != nil {
-		log.Fatal(categoryErr)
-	}
-
-	cornellNoteErr := database.Client.AutoMigrate(CornellNote{})
-
-	if cornellNoteErr != nil {
-		log.Fatal(cornellNoteErr)
-	}
+	CornellNote{}.RunMigration(clientDB)
 }

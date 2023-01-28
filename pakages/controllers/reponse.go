@@ -1,4 +1,4 @@
-package shared
+package controllers
 
 type ApiResponse struct {
 	Status  uint   `json:"status"`

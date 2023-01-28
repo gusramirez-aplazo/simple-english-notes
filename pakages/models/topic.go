@@ -1,6 +1,9 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+	"log"
+)
 
 type Topic struct {
 	gorm.Model
@@ -8,4 +11,12 @@ type Topic struct {
 	ID          uint   `gorm:"primaryKey; autoIncrement; not null; unique_index"`
 	Name        string `gorm:"not null;unique;type:varchar(100)"`
 	Description string
+}
+
+func (topic Topic) RunMigration(clientDB *gorm.DB) {
+	topicMigrationErr := clientDB.AutoMigrate(Topic{})
+
+	if topicMigrationErr != nil {
+		log.Fatal(topicMigrationErr)
+	}
 }
