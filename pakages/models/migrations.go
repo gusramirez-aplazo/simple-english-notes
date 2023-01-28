@@ -35,4 +35,10 @@ func RunMigrations() {
 	if categoryErr != nil {
 		log.Fatal(categoryErr)
 	}
+
+	cornellNoteErr := database.Client.AutoMigrate(CornellNote{})
+
+	if cornellNoteErr != nil {
+		log.Fatal(cornellNoteErr)
+	}
 }
