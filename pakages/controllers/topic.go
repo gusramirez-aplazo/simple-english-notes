@@ -60,3 +60,28 @@ func (controller Controller) CreateTopicControllerFactory(clientDB *gorm.DB, val
 		})
 	}
 }
+
+func (controller Controller) GetTopicsControllerFactory(clientDB *gorm.DB) func(*fiber.Ctx) error {
+	return func(context *fiber.Ctx) error {
+		var topics []models.Topic
+
+		clientDB.Unscoped().Find(&topics)
+
+		var formattedTopics []fiber.Map
+
+		for i := 0; i < len(topics); i++ {
+			formattedTopics = append(formattedTopics, fiber.Map{
+				"id":          topics[i].ID,
+				"name":        topics[i].Name,
+				"description": topics[i].Description,
+				"createdAt":   topics[i].CreatedAt,
+			})
+		}
+
+		return context.Status(fiber.StatusOK).JSON(fiber.Map{
+			"success": true,
+			"content": formattedTopics,
+			"error":   nil,
+		})
+	}
+}
