@@ -1,14 +1,12 @@
 package controllers
 
 import (
-	"encoding/json"
-	"net/http"
+	"github.com/gofiber/fiber/v2"
 )
 
-func (controller Controller) HomeController(response http.ResponseWriter, request *http.Request) {
-
-	response.Header().Set("Content-Type", "application/json")
-	response.WriteHeader(http.StatusOK)
-
-	_ = json.NewEncoder(response).Encode(NewSuccessResponse("Hello From Server!!"))
+func (controller Controller) HomeController(context *fiber.Ctx) error {
+	return context.JSON(&fiber.Map{
+		"success": true,
+		"content": "Hello World with Fiber!!",
+	})
 }
