@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"github.com/go-playground/validator/v10"
+	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gusramirez-aplazo/simple-english-notes/pakages/controllers"
 	"github.com/gusramirez-aplazo/simple-english-notes/pakages/database"
@@ -9,6 +11,8 @@ import (
 	"github.com/gusramirez-aplazo/simple-english-notes/pakages/routes"
 	"log"
 )
+
+var validate = validator.New()
 
 func init() {
 	database.Connect()
@@ -18,13 +22,16 @@ func init() {
 func main() {
 	const port = 3000
 
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		JSONEncoder: json.Marshal,
+		JSONDecoder: json.Unmarshal,
+	})
 
-	controller := &controllers.Controller{}
+	controller := controllers.GetController()
 
-	routes.Start(app, controller, database.GetDbClient())
+	routes.Start(app, controller, database.GetDbClient(), validate)
 
-	fmt.Printf("Server listen on port: %v", port)
+	log.Printf("Server listen on port: %v", port)
 
 	address := fmt.Sprintf(":%v", port)
 
