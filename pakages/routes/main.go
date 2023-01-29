@@ -6,12 +6,15 @@ import (
 	"gorm.io/gorm"
 )
 
+// TODO: handle not found routes
 func Start(router *mux.Router, controller *controllers.Controller, clientDB *gorm.DB) {
 	const apiPrefix = "/api/v1"
 
 	router.HandleFunc("/", controller.HomeController)
 
-	//subrouter := router.PathPrefix(apiPrefix).Subrouter()
+	subRouter := router.PathPrefix(apiPrefix).Subrouter()
 
-	//subrouter.HandleFunc("/category")
+	createTopicController := controller.CreateTopicControllerFactory(clientDB)
+
+	subRouter.HandleFunc("/topic", createTopicController).Methods("POST")
 }
