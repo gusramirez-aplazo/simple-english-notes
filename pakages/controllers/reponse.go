@@ -7,6 +7,7 @@ type ApiResponse struct {
 	Ok      bool   `json:"ok"`
 }
 
+// TODO: needs to improve method into a factory, for handle deiferent statuses  and errors
 func NewSuccessResponse(content any) *ApiResponse {
 	return &ApiResponse{
 		Ok:      true,

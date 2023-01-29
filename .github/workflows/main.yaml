@@ -2,8 +2,8 @@ name: english-notes ci
 
 on:
   push:
-    branches:
-      - main
+    tags:
+      - release-*
 
 env:
   NOTES_DBNAME: ${{ secrets.NOTES_DBNAME }}
