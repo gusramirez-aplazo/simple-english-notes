@@ -1,46 +1,62 @@
 package controllers
 
 import (
-	"encoding/json"
+	"github.com/go-playground/validator/v10"
+	"github.com/gofiber/fiber/v2"
 	"github.com/gusramirez-aplazo/simple-english-notes/pakages/models"
 	"gorm.io/gorm"
-	"log"
-	"net/http"
+	"strings"
 )
 
-// TODO: sanitize request
 // TODO: testing
-// TODO: ensure correct capitlazation (all lower or upper)[only for names, titles and key parameters]
-func (controller Controller) CreateTopicControllerFactory(clientDB *gorm.DB) func(http.ResponseWriter, *http.Request) {
-	return func(response http.ResponseWriter, request *http.Request) {
-		var topic models.Topic
-		response.Header().Set("Content-Type", "application/json")
+func (controller Controller) CreateTopicControllerFactory(clientDB *gorm.DB, validate *validator.Validate) func(*fiber.Ctx) error {
+	return func(context *fiber.Ctx) error {
+		context.Accepts("application/json")
 
-		if err := json.NewDecoder(request.Body).Decode(&topic); err != nil {
+		topic := new(models.Topic)
 
-			response.WriteHeader(http.StatusBadRequest)
-			_ = json.NewEncoder(response).Encode(NewErrorResponse("Bad request", 400))
-			return
+		if err := context.BodyParser(topic); err != nil {
+			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"content": nil,
+				"error":   err.Error(),
+			})
 		}
 
-		newTopic := clientDB.Create(&topic)
+		topic.Name = strings.TrimSpace(topic.Name)
+		topic.Name = strings.ToLower(topic.Name)
+		topic.Description = strings.TrimSpace(topic.Description)
 
-		if newTopic.Error != nil {
+		validationErrors := ValidateStruct(*topic, validate)
 
-			response.WriteHeader(http.StatusBadRequest)
-			// TODO: pass a sanitized error maybe with a global error factory
-			_ = json.NewEncoder(response).Encode(NewErrorResponse("topic not created", 400))
-			return
+		if validationErrors != nil {
+			return context.Status(fiber.StatusBadRequest).
+				JSON(fiber.Map{
+					"success": false,
+					"content": nil,
+					"error":   validationErrors,
+				})
 		}
 
-		// TODO: handle nested structs
-		res, err := json.Marshal(newTopic)
+		dbCreationResponse := clientDB.Create(&topic)
 
-		if err == nil {
-			log.Fatal("json parsing runtime error")
+		if dbCreationResponse.Error != nil {
+			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"content": nil,
+				"error":   dbCreationResponse.Error.Error(),
+			})
 		}
 
-		response.WriteHeader(http.StatusCreated)
-		_ = json.NewEncoder(response).Encode(NewSuccessResponse(res))
+		return context.Status(fiber.StatusCreated).JSON(fiber.Map{
+			"success": true,
+			"content": fiber.Map{
+				"id":          topic.ID,
+				"name":        topic.Name,
+				"description": topic.Description,
+				"createdAt":   topic.CreatedAt,
+			},
+			"error": nil,
+		})
 	}
 }

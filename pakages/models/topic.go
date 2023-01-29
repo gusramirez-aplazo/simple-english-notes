@@ -10,7 +10,7 @@ type Topic struct {
 
 	ID          uint   `gorm:"primaryKey; autoIncrement; not null; unique_index"`
 	Name        string `gorm:"not null;unique;type:varchar(100)" validate:"required"`
-	Description string `validate:"required"`
+	Description string
 }
 
 func (topic Topic) RunMigration(clientDB *gorm.DB) {
