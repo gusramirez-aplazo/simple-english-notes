@@ -20,4 +20,8 @@ func Start(fiberApp *fiber.App, controller *controllers.Controller, clientDB *go
 	createTopicController := controller.CreateTopicControllerFactory(clientDB, v)
 
 	version1Routes.Post("/topic", createTopicController)
+
+	getTopicsController := controller.GetTopicsControllerFactory(clientDB)
+
+	version1Routes.Get("/topic", getTopicsController)
 }
