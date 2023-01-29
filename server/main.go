@@ -2,13 +2,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/gorilla/mux"
+	"github.com/gofiber/fiber/v2"
 	"github.com/gusramirez-aplazo/simple-english-notes/pakages/controllers"
 	"github.com/gusramirez-aplazo/simple-english-notes/pakages/database"
 	"github.com/gusramirez-aplazo/simple-english-notes/pakages/models"
 	"github.com/gusramirez-aplazo/simple-english-notes/pakages/routes"
 	"log"
-	"net/http"
 )
 
 func init() {
@@ -19,15 +18,15 @@ func init() {
 func main() {
 	const port = 3000
 
-	router := mux.NewRouter()
+	app := fiber.New()
 
 	controller := &controllers.Controller{}
 
-	routes.Start(router, controller, database.GetDbClient())
+	routes.Start(app, controller, database.GetDbClient())
 
 	fmt.Printf("Server listen on port: %v", port)
 
 	address := fmt.Sprintf(":%v", port)
 
-	log.Fatal(http.ListenAndServe(address, router))
+	log.Fatal(app.Listen(address))
 }
