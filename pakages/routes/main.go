@@ -33,4 +33,8 @@ func Start(
 	getTopicByIdController := controller.GetTopicByIdControllerFactory(clientDB)
 
 	version1Routes.Get("/topic/:topicId", getTopicByIdController)
+
+	deleteTopicByIdController := controller.DeleteTopicByIdControllerFactory(clientDB)
+
+	version1Routes.Delete("/topic/:topicId", deleteTopicByIdController)
 }
