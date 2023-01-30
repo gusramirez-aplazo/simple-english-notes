@@ -22,23 +22,6 @@ func Start(
 	apiRoutes := fiberApp.Group(apiPrefix)
 	version1Routes := apiRoutes.Group(v1Prefix)
 
-	createTopicController := controller.CreateTopicControllerFactory(clientDB, validate)
+	initTopicRoutes(controller, version1Routes, clientDB, validate)
 
-	version1Routes.Post("/topic", createTopicController)
-
-	getTopicsController := controller.GetTopicsControllerFactory(clientDB)
-
-	version1Routes.Get("/topic", getTopicsController)
-
-	getTopicByIdController := controller.GetTopicByIdControllerFactory(clientDB)
-
-	version1Routes.Get("/topic/:topicId", getTopicByIdController)
-
-	deleteTopicByIdController := controller.DeleteTopicByIdControllerFactory(clientDB)
-
-	version1Routes.Delete("/topic/:topicId", deleteTopicByIdController)
-
-	updateTopicByIdController := controller.UpdateTopicByIdControllerFactory(clientDB, validate)
-
-	version1Routes.Put("/topic/:topicId", updateTopicByIdController)
 }
