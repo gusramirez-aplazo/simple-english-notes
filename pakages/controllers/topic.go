@@ -74,7 +74,7 @@ func (controller Controller) GetTopicsControllerFactory(
 
 		var topics []models.Topic
 
-		clientDB.Unscoped().Find(&topics)
+		clientDB.Find(&topics)
 
 		var formattedTopics []fiber.Map
 
@@ -140,6 +140,59 @@ func (controller Controller) GetTopicByIdControllerFactory(
 				"name":        topic.Name,
 				"description": topic.Description,
 				"createdAt":   topic.CreatedAt,
+			},
+			"error": nil,
+		})
+	}
+}
+
+func (controller Controller) DeleteTopicByIdControllerFactory(
+	clientDB *gorm.DB,
+) func(ctx *fiber.Ctx) error {
+	return func(context *fiber.Ctx) error {
+		context.Accepts("application/json")
+
+		topicId := context.Params("topicId")
+
+		if len(topicId) == 0 {
+			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"content": nil,
+				"error":   "Topic id is empty",
+			})
+		}
+
+		ui64, parseErr := strconv.ParseUint(topicId, 10, 64)
+
+		if parseErr != nil {
+			return context.Status(fiber.StatusInternalServerError).JSON(&fiber.Map{
+				"success": false,
+				"content": nil,
+				"error":   "Ups! Something wrong with the server",
+			})
+		}
+
+		var topic = models.Topic{ID: uint(ui64)}
+
+		clientDB.First(&topic)
+
+		if topic.Name == "" {
+			return context.Status(fiber.StatusNotFound).JSON(&fiber.Map{
+				"success": false,
+				"content": nil,
+				"error":   fmt.Sprintf("ID %v not found", topicId),
+			})
+		}
+
+		clientDB.Delete(&topic)
+
+		return context.Status(fiber.StatusAccepted).JSON(&fiber.Map{
+			"success": true,
+			"content": fiber.Map{
+				"id":          topic.ID,
+				"name":        topic.Name,
+				"description": topic.Description,
+				"deletedAt":   topic.DeletedAt,
 			},
 			"error": nil,
 		})
