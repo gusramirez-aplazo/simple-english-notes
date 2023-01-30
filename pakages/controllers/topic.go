@@ -9,7 +9,10 @@ import (
 )
 
 // TODO: testing
-func (controller Controller) CreateTopicControllerFactory(clientDB *gorm.DB, validate *validator.Validate) func(*fiber.Ctx) error {
+func (controller Controller) CreateTopicControllerFactory(
+	clientDB *gorm.DB,
+	validate *validator.Validate,
+) func(*fiber.Ctx) error {
 	return func(context *fiber.Ctx) error {
 		context.Accepts("application/json")
 
@@ -61,7 +64,9 @@ func (controller Controller) CreateTopicControllerFactory(clientDB *gorm.DB, val
 	}
 }
 
-func (controller Controller) GetTopicsControllerFactory(clientDB *gorm.DB) func(*fiber.Ctx) error {
+func (controller Controller) GetTopicsControllerFactory(
+	clientDB *gorm.DB,
+) func(*fiber.Ctx) error {
 	return func(context *fiber.Ctx) error {
 		var topics []models.Topic
 

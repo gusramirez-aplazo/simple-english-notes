@@ -8,9 +8,12 @@ type ErrorResponse struct {
 	Value       string
 }
 
-func ValidateStruct(s any, v *validator.Validate) []*ErrorResponse {
+func ValidateStruct(
+	toValidate any,
+	validate *validator.Validate,
+) []*ErrorResponse {
 	var errors []*ErrorResponse
-	err := v.Struct(s)
+	err := validate.Struct(toValidate)
 	if err != nil {
 		for _, err := range err.(validator.ValidationErrors) {
 			var element ErrorResponse

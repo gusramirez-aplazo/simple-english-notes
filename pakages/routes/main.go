@@ -8,7 +8,12 @@ import (
 )
 
 // TODO: handle not found routes
-func Start(fiberApp *fiber.App, controller *controllers.Controller, clientDB *gorm.DB, v *validator.Validate) {
+func Start(
+	fiberApp *fiber.App,
+	controller *controllers.Controller,
+	clientDB *gorm.DB,
+	validate *validator.Validate,
+) {
 	const apiPrefix = "/api"
 	const v1Prefix = "/v1"
 
@@ -17,7 +22,7 @@ func Start(fiberApp *fiber.App, controller *controllers.Controller, clientDB *go
 	apiRoutes := fiberApp.Group(apiPrefix)
 	version1Routes := apiRoutes.Group(v1Prefix)
 
-	createTopicController := controller.CreateTopicControllerFactory(clientDB, v)
+	createTopicController := controller.CreateTopicControllerFactory(clientDB, validate)
 
 	version1Routes.Post("/topic", createTopicController)
 
