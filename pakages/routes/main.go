@@ -29,4 +29,8 @@ func Start(
 	getTopicsController := controller.GetTopicsControllerFactory(clientDB)
 
 	version1Routes.Get("/topic", getTopicsController)
+
+	getTopicByIdController := controller.GetTopicByIdControllerFactory(clientDB)
+
+	version1Routes.Get("/topic/:topicId", getTopicByIdController)
 }
