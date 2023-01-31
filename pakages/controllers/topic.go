@@ -257,7 +257,8 @@ func (controller Controller) UpdateTopicByIdControllerFactory(
 			topic.Name = proposedTopic.Name
 		}
 
-		if topic.Description != proposedTopic.Description {
+		if proposedTopic.Description != "" &&
+			topic.Description != proposedTopic.Description {
 			topic.Description = proposedTopic.Description
 		}
 

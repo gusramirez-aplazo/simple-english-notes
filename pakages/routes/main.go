@@ -24,4 +24,5 @@ func Start(
 
 	initTopicRoutes(controller, version1Routes, clientDB, validate)
 	initCategoryRoutes(controller, version1Routes, clientDB, validate)
+	initNoteRoutes(controller, version1Routes, clientDB)
 }

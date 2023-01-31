@@ -107,7 +107,7 @@ func (controller Controller) GetCategoryByIdControllerFactory(
 		ui64, parseErr := strconv.ParseUint(categoryId, 10, 64)
 
 		if parseErr != nil {
-			return context.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"success": false,
 				"content": nil,
 				"error":   fmt.Sprintf("Ensure the ID %v is numeric only", categoryId),
@@ -119,14 +119,14 @@ func (controller Controller) GetCategoryByIdControllerFactory(
 		clientDB.First(&category)
 
 		if category.Name == "" {
-			return context.Status(fiber.StatusNotFound).JSON(&fiber.Map{
+			return context.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"success": false,
 				"content": nil,
 				"error":   fmt.Sprintf("ID %v not found", categoryId),
 			})
 		}
 
-		return context.Status(fiber.StatusOK).JSON(&fiber.Map{
+		return context.Status(fiber.StatusOK).JSON(fiber.Map{
 			"success": true,
 			"content": fiber.Map{
 				"id":          category.ID,
@@ -156,7 +156,7 @@ func (controller Controller) DeleteCategoryByIdControllerFactory(
 		ui64, parseErr := strconv.ParseUint(categoryId, 10, 64)
 
 		if parseErr != nil {
-			return context.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"success": false,
 				"content": nil,
 				"error":   fmt.Sprintf("Ensure the ID %v is numeric only", categoryId),
@@ -168,7 +168,7 @@ func (controller Controller) DeleteCategoryByIdControllerFactory(
 		clientDB.First(&category)
 
 		if category.Name == "" {
-			return context.Status(fiber.StatusNotFound).JSON(&fiber.Map{
+			return context.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"success": false,
 				"content": nil,
 				"error":   fmt.Sprintf("ID %v not found", categoryId),
@@ -177,7 +177,7 @@ func (controller Controller) DeleteCategoryByIdControllerFactory(
 
 		clientDB.Delete(&category)
 
-		return context.Status(fiber.StatusAccepted).JSON(&fiber.Map{
+		return context.Status(fiber.StatusAccepted).JSON(fiber.Map{
 			"success": true,
 			"content": fiber.Map{
 				"id":          category.ID,
@@ -208,7 +208,7 @@ func (controller Controller) UpdateCategoryByIdControllerFactory(
 		ui64, parseErr := strconv.ParseUint(categoryId, 10, 64)
 
 		if parseErr != nil {
-			return context.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"success": false,
 				"content": nil,
 				"error":   fmt.Sprintf("Ensure the ID %v is numeric only", categoryId),
@@ -220,7 +220,7 @@ func (controller Controller) UpdateCategoryByIdControllerFactory(
 		clientDB.First(&category)
 
 		if category.Name == "" {
-			return context.Status(fiber.StatusNotFound).JSON(&fiber.Map{
+			return context.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"success": false,
 				"content": nil,
 				"error":   fmt.Sprintf("ID %v not found", categoryId),
@@ -256,7 +256,8 @@ func (controller Controller) UpdateCategoryByIdControllerFactory(
 			category.Name = proposedCategory.Name
 		}
 
-		if category.Description != proposedCategory.Description {
+		if proposedCategory.Description != "" &&
+			category.Description != proposedCategory.Description {
 			category.Description = proposedCategory.Description
 		}
 

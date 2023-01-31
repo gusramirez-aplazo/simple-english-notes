@@ -10,11 +10,11 @@ type CornellNote struct {
 	gorm.Model
 
 	ID       uuid.UUID        `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
-	Title    string           `gorm:"not null"`
+	Title    string           `gorm:"not null" validate:"required"`
 	Topic    Topic            `gorm:"not null;foreignKey:ID"`
 	Category Category         `gorm:"not null;foreignKey:ID"`
-	Question RelevantQuestion `gorm:"foreignKey:ID"`
-	Prompt   RecallPrompt     `gorm:"foreignKey:ID"`
+	Question RelevantQuestion `gorm:"foreignKey:ID" validate:"required"`
+	Prompt   RecallPrompt     `gorm:"foreignKey:ID" validate:"required"`
 }
 
 func (note CornellNote) RunMigration(clientDB *gorm.DB) {
