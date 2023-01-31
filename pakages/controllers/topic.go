@@ -16,8 +16,6 @@ func (controller Controller) CreateTopicControllerFactory(
 	validate *validator.Validate,
 ) func(*fiber.Ctx) error {
 	return func(context *fiber.Ctx) error {
-		context.Accepts("application/json")
-
 		topic := new(models.Topic)
 
 		if err := context.BodyParser(topic); err != nil {
@@ -70,8 +68,6 @@ func (controller Controller) GetTopicsControllerFactory(
 	clientDB *gorm.DB,
 ) func(*fiber.Ctx) error {
 	return func(context *fiber.Ctx) error {
-		context.Accepts("application/json")
-
 		var topics []models.Topic
 
 		clientDB.Find(&topics)
@@ -99,8 +95,6 @@ func (controller Controller) GetTopicByIdControllerFactory(
 	clientDB *gorm.DB,
 ) func(ctx *fiber.Ctx) error {
 	return func(context *fiber.Ctx) error {
-		context.Accepts("application/json")
-
 		topicId := context.Params("topicId")
 
 		if len(topicId) == 0 {
@@ -150,8 +144,6 @@ func (controller Controller) DeleteTopicByIdControllerFactory(
 	clientDB *gorm.DB,
 ) func(ctx *fiber.Ctx) error {
 	return func(context *fiber.Ctx) error {
-		context.Accepts("application/json")
-
 		topicId := context.Params("topicId")
 
 		if len(topicId) == 0 {
@@ -204,8 +196,6 @@ func (controller Controller) UpdateTopicByIdControllerFactory(
 	validate *validator.Validate,
 ) func(ctx *fiber.Ctx) error {
 	return func(context *fiber.Ctx) error {
-		context.Accepts("application/json")
-
 		topicId := context.Params("topicId")
 
 		if len(topicId) == 0 {

@@ -23,5 +23,5 @@ func Start(
 	version1Routes := apiRoutes.Group(v1Prefix)
 
 	initTopicRoutes(controller, version1Routes, clientDB, validate)
-
+	initCategoryRoutes(controller, version1Routes, clientDB, validate)
 }
