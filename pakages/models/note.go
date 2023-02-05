@@ -8,8 +8,8 @@ import (
 type Note struct {
 	gorm.Model
 
-	ID      uint   `gorm:"primaryKey; autoIncrement; not null; unique_index"`
-	Content string `gorm:"not null"`
+	NoteID  uint   `gorm:"primaryKey; autoIncrement; not null; unique_index" json:"noteId"`
+	Content string `gorm:"not null" json:"content"`
 }
 
 func (note Note) RunMigration(clientDB *gorm.DB) {

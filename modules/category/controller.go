@@ -1,28 +1,33 @@
-package controllers
+package category
 
 import (
 	"fmt"
-	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gusramirez-aplazo/simple-english-notes/pakages/models"
-	"gorm.io/gorm"
-	"strconv"
+	"github.com/gusramirez-aplazo/simple-english-notes/modules/shared/entities"
+	"github.com/gusramirez-aplazo/simple-english-notes/modules/shared/infra"
 	"strings"
 )
 
-func (controller Controller) GetAllCategoriesControllerFactory(
-	clientDB *gorm.DB,
+func getAllCategoriesControllerFactory(
+	repository *Repository,
 ) func(*fiber.Ctx) error {
 	return func(context *fiber.Ctx) error {
-		var categories []models.Category
+		var categories []entities.Category
 
-		clientDB.Find(&categories)
+		if err := repository.GetAllItems(&categories); err != nil {
+			return context.Status(fiber.StatusInternalServerError).
+				JSON(fiber.Map{
+					"success": false,
+					"content": nil,
+					"error":   err.Error(),
+				})
+		}
 
 		var formattedCategories []fiber.Map
 
 		for i := 0; i < len(categories); i++ {
 			formattedCategories = append(formattedCategories, fiber.Map{
-				"id":          categories[i].ID,
+				"categoryId":  categories[i].CategoryID,
 				"name":        categories[i].Name,
 				"description": categories[i].Description,
 				"createdAt":   categories[i].CreatedAt,
@@ -37,12 +42,11 @@ func (controller Controller) GetAllCategoriesControllerFactory(
 	}
 }
 
-func (controller Controller) CreateCategoryControllerFactory(
-	clientDB *gorm.DB,
-	validate *validator.Validate,
+func createCategoryControllerFactory(
+	repository *Repository,
 ) func(*fiber.Ctx) error {
 	return func(context *fiber.Ctx) error {
-		category := new(models.Category)
+		category := new(entities.Category)
 
 		if err := context.BodyParser(category); err != nil {
 			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -56,31 +60,18 @@ func (controller Controller) CreateCategoryControllerFactory(
 		category.Name = strings.ToLower(category.Name)
 		category.Description = strings.TrimSpace(category.Description)
 
-		validationErrors := ValidateStruct(*category, validate)
-
-		if validationErrors != nil {
-			return context.Status(fiber.StatusBadRequest).
-				JSON(fiber.Map{
-					"success": false,
-					"content": nil,
-					"error":   validationErrors,
-				})
-		}
-
-		dbCreationResponse := clientDB.Create(&category)
-
-		if dbCreationResponse.Error != nil {
+		if err := repository.GetItemOrCreate(category); err != nil {
 			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"success": false,
 				"content": nil,
-				"error":   dbCreationResponse.Error.Error(),
+				"error":   err.Error(),
 			})
 		}
 
 		return context.Status(fiber.StatusCreated).JSON(fiber.Map{
 			"success": true,
 			"content": fiber.Map{
-				"id":          category.ID,
+				"categoryId":  category.CategoryID,
 				"name":        category.Name,
 				"description": category.Description,
 				"createdAt":   category.CreatedAt,
@@ -90,46 +81,38 @@ func (controller Controller) CreateCategoryControllerFactory(
 	}
 }
 
-func (controller Controller) GetCategoryByIdControllerFactory(
-	clientDB *gorm.DB,
+func getCategoryByIdControllerFactory(
+	repository *Repository,
 ) func(ctx *fiber.Ctx) error {
 	return func(context *fiber.Ctx) error {
-		categoryId := context.Params("categoryId")
+		id := context.Params("categoryId")
 
-		if len(categoryId) == 0 {
+		parsedId, parsedIdErr := infra.ParseID(id)
+
+		if parsedIdErr != nil {
 			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"success": false,
 				"content": nil,
-				"error":   "Category id is empty",
+				"error":   parsedIdErr.Error(),
 			})
 		}
 
-		ui64, parseErr := strconv.ParseUint(categoryId, 10, 64)
+		var category = entities.Category{CategoryID: parsedId}
 
-		if parseErr != nil {
-			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"success": false,
-				"content": nil,
-				"error":   fmt.Sprintf("Ensure the ID %v is numeric only", categoryId),
-			})
-		}
-
-		var category = models.Category{ID: uint(ui64)}
-
-		clientDB.First(&category)
+		repository.GetItem(&category)
 
 		if category.Name == "" {
 			return context.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"success": false,
 				"content": nil,
-				"error":   fmt.Sprintf("ID %v not found", categoryId),
+				"error":   fmt.Sprintf("ID %v not found", id),
 			})
 		}
 
 		return context.Status(fiber.StatusOK).JSON(fiber.Map{
 			"success": true,
 			"content": fiber.Map{
-				"id":          category.ID,
+				"categoryId":  category.CategoryID,
 				"name":        category.Name,
 				"description": category.Description,
 				"createdAt":   category.CreatedAt,
@@ -139,48 +122,40 @@ func (controller Controller) GetCategoryByIdControllerFactory(
 	}
 }
 
-func (controller Controller) DeleteCategoryByIdControllerFactory(
-	clientDB *gorm.DB,
+func deleteCategoryByIdControllerFactory(
+	repository *Repository,
 ) func(ctx *fiber.Ctx) error {
 	return func(context *fiber.Ctx) error {
-		categoryId := context.Params("categoryId")
+		id := context.Params("categoryId")
 
-		if len(categoryId) == 0 {
+		parsedId, parsedIdErr := infra.ParseID(id)
+
+		if parsedIdErr != nil {
 			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"success": false,
 				"content": nil,
-				"error":   "Category id is empty",
+				"error":   parsedIdErr.Error(),
 			})
 		}
 
-		ui64, parseErr := strconv.ParseUint(categoryId, 10, 64)
+		var category = entities.Category{CategoryID: parsedId}
 
-		if parseErr != nil {
-			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"success": false,
-				"content": nil,
-				"error":   fmt.Sprintf("Ensure the ID %v is numeric only", categoryId),
-			})
-		}
-
-		var category = models.Category{ID: uint(ui64)}
-
-		clientDB.First(&category)
+		repository.GetItem(&category)
 
 		if category.Name == "" {
 			return context.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"success": false,
 				"content": nil,
-				"error":   fmt.Sprintf("ID %v not found", categoryId),
+				"error":   fmt.Sprintf("ID %v not found", id),
 			})
 		}
 
-		clientDB.Delete(&category)
+		repository.DeleteItem(&category)
 
 		return context.Status(fiber.StatusAccepted).JSON(fiber.Map{
 			"success": true,
 			"content": fiber.Map{
-				"id":          category.ID,
+				"categoryId":  category.CategoryID,
 				"name":        category.Name,
 				"description": category.Description,
 				"deletedAt":   category.DeletedAt,
@@ -190,44 +165,35 @@ func (controller Controller) DeleteCategoryByIdControllerFactory(
 	}
 }
 
-func (controller Controller) UpdateCategoryByIdControllerFactory(
-	clientDB *gorm.DB,
-	validate *validator.Validate,
+func updateCategoryByIdControllerFactory(
+	repository *Repository,
 ) func(ctx *fiber.Ctx) error {
 	return func(context *fiber.Ctx) error {
-		categoryId := context.Params("categoryId")
+		id := context.Params("categoryId")
 
-		if len(categoryId) == 0 {
+		parsedId, parsedIdErr := infra.ParseID(id)
+
+		if parsedIdErr != nil {
 			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"success": false,
 				"content": nil,
-				"error":   "Category id is empty",
+				"error":   parsedIdErr.Error(),
 			})
 		}
 
-		ui64, parseErr := strconv.ParseUint(categoryId, 10, 64)
+		var category = entities.Category{CategoryID: parsedId}
 
-		if parseErr != nil {
-			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"success": false,
-				"content": nil,
-				"error":   fmt.Sprintf("Ensure the ID %v is numeric only", categoryId),
-			})
-		}
-
-		var category = models.Category{ID: uint(ui64)}
-
-		clientDB.First(&category)
+		repository.GetItem(&category)
 
 		if category.Name == "" {
 			return context.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"success": false,
 				"content": nil,
-				"error":   fmt.Sprintf("ID %v not found", categoryId),
+				"error":   fmt.Sprintf("ID %v not found", id),
 			})
 		}
 
-		proposedCategory := new(models.Category)
+		proposedCategory := new(entities.Category)
 
 		if err := context.BodyParser(proposedCategory); err != nil {
 			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -241,15 +207,12 @@ func (controller Controller) UpdateCategoryByIdControllerFactory(
 		proposedCategory.Name = strings.ToLower(proposedCategory.Name)
 		proposedCategory.Description = strings.TrimSpace(proposedCategory.Description)
 
-		validationErrors := ValidateStruct(*proposedCategory, validate)
-
-		if validationErrors != nil {
-			return context.Status(fiber.StatusBadRequest).
-				JSON(fiber.Map{
-					"success": false,
-					"content": nil,
-					"error":   validationErrors,
-				})
+		if proposedCategory.Name == "" {
+			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"content": nil,
+				"error":   "Category Name is required",
+			})
 		}
 
 		if category.Name != proposedCategory.Name {
@@ -261,12 +224,12 @@ func (controller Controller) UpdateCategoryByIdControllerFactory(
 			category.Description = proposedCategory.Description
 		}
 
-		clientDB.Save(&category)
+		repository.UpdateItem(&category)
 
 		return context.Status(fiber.StatusOK).JSON(fiber.Map{
 			"success": true,
 			"content": fiber.Map{
-				"id":          category.ID,
+				"categoryId":  category.CategoryID,
 				"name":        category.Name,
 				"description": category.Description,
 				"updatedAt":   category.UpdatedAt,

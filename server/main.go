@@ -2,34 +2,48 @@ package main
 
 import (
 	"fmt"
-	"github.com/go-playground/validator/v10"
 	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gusramirez-aplazo/simple-english-notes/pakages/controllers"
+	"github.com/gusramirez-aplazo/simple-english-notes/modules/category"
+	"github.com/gusramirez-aplazo/simple-english-notes/modules/cornell-note"
+	"github.com/gusramirez-aplazo/simple-english-notes/modules/subject"
 	"github.com/gusramirez-aplazo/simple-english-notes/pakages/database"
-	"github.com/gusramirez-aplazo/simple-english-notes/pakages/models"
-	"github.com/gusramirez-aplazo/simple-english-notes/pakages/routes"
 	"log"
 )
 
-var validate = validator.New()
-
 func init() {
 	database.Connect()
-	models.RunMigrations(database.GetDbClient())
 }
 
 func main() {
 	const port = 3000
 
-	app := fiber.New(fiber.Config{
+	fiberConfig := fiber.Config{
 		JSONEncoder: json.Marshal,
 		JSONDecoder: json.Unmarshal,
+	}
+
+	app := fiber.New(fiberConfig)
+
+	app.Get("/", func(context *fiber.Ctx) error {
+		return context.JSON(&fiber.Map{
+			"success": true,
+			"content": "Hello World with Fiber!!",
+		})
 	})
 
-	controller := controllers.GetController()
+	const apiPrefix = "/api"
+	const versionPrefix = "/v1"
 
-	routes.Start(app, controller, database.GetDbClient(), validate)
+	apiRoutes := app.Group(apiPrefix)
+
+	currentVersionedRoutes := apiRoutes.Group(versionPrefix)
+
+	subject.StartSubjectModule(database.GetDbClient(), currentVersionedRoutes)
+
+	category.StartCategoryModule(database.GetDbClient(), currentVersionedRoutes)
+
+	cornellNote.StartCornellNoteModule(database.GetDbClient(), currentVersionedRoutes)
 
 	log.Printf("Server listen on port: %v", port)
 
