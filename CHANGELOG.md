@@ -1,4 +1,8 @@
 ## All Changes
+5a5782864867f78b288dc05e4a765620f583c2df fix: many to many table name from cornell-subject
+
+4ef066f752a1b11226589179e23f2ed68bf9bbcf chore: update changelog
+
 cf46f3f1bc49f3a04f8dac381acda8e0a54cbd14 feat: rewrite of the domain,logic and organization
 
 c8043720b94916334092e875fa4ab225f0df6145 chore: add changelog
