@@ -57,7 +57,7 @@ func createSubjectControllerFactory(
 	}
 }
 
-func getSubjectControllerFactory(
+func getSubjectsControllerFactory(
 	repository *Repository,
 ) func(*fiber.Ctx) error {
 	return func(context *fiber.Ctx) error {
@@ -79,6 +79,14 @@ func getSubjectControllerFactory(
 				"name":        subjects[i].Name,
 				"description": subjects[i].Description,
 				"createdAt":   subjects[i].CreatedAt,
+			})
+		}
+
+		if len(formattedSubjects) == 0 {
+			return context.Status(fiber.StatusOK).JSON(fiber.Map{
+				"success": true,
+				"content": []fiber.Map{},
+				"error":   nil,
 			})
 		}
 

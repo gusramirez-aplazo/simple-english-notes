@@ -1,12 +1,12 @@
 package entities
 
-type SomeRequest struct {
+type CommonAtts struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 }
 
 type CornellNoteRequest struct {
-	Topic      string        `json:"topic"`
-	Subjects   []SomeRequest `json:"subjects"`
-	Categories []SomeRequest `json:"categories"`
+	Topic      string       `json:"topic"`
+	Subjects   []CommonAtts `json:"subjects"`
+	Categories []CommonAtts `json:"categories"`
 }

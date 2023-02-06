@@ -34,6 +34,14 @@ func getAllCategoriesControllerFactory(
 			})
 		}
 
+		if len(formattedCategories) == 0 {
+			return context.Status(fiber.StatusOK).JSON(fiber.Map{
+				"success": true,
+				"content": []fiber.Map{},
+				"error":   nil,
+			})
+		}
+
 		return context.Status(fiber.StatusOK).JSON(fiber.Map{
 			"success": true,
 			"content": formattedCategories,

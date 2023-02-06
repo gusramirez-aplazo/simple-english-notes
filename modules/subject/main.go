@@ -23,7 +23,7 @@ func StartSubjectModule(
 
 	router.Post(basePath, createSubjectControllerFactory(repo))
 
-	router.Get(basePath, getSubjectControllerFactory(repo))
+	router.Get(basePath, getSubjectsControllerFactory(repo))
 
 	router.Get(basePath+"/:topicId", getSubjectByIdControllerFactory(repo))
 
