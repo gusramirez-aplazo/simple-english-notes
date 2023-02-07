@@ -34,7 +34,7 @@ func (repo *Repository) CreateMany(
 func (repo *Repository) GetItem(
 	subject *entities.Subject,
 ) {
-	getCurrentClientDB().First(&subject)
+	getCurrentClientDB().First(&subject, "name=?", subject.Name)
 }
 
 func (repo *Repository) GetItemOrCreate(

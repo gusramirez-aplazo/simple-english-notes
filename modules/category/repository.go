@@ -44,7 +44,7 @@ func (repo *Repository) AsyncGet(
 func (repo *Repository) GetItem(
 	category *entities.Category,
 ) {
-	getCurrentClientDB().First(&category)
+	getCurrentClientDB().First(&category, "name=?", category.Name)
 }
 
 func (repo *Repository) GetItemOrCreate(
