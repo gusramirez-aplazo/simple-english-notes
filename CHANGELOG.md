@@ -1,4 +1,8 @@
 ## All Changes
+4a17271a2279d565f9513a76b570cf0ac1d93745 fix: createOrUpdate for category & subject
+
+9fac32bdd5201847f77eceb4eae1e9eb015e2063 docs: update changelog
+
 5a5782864867f78b288dc05e4a765620f583c2df fix: many to many table name from cornell-subject
 
 4ef066f752a1b11226589179e23f2ed68bf9bbcf chore: update changelog
