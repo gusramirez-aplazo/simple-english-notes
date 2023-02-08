@@ -1,4 +1,8 @@
 ## All Changes
+536dc95315791dbc343d013d279dd503f320e209 refactor: clean unused code
+
+497c0c1680fc32a38b4cf6141d684c66f80794d6 docs: update changelog
+
 4a17271a2279d565f9513a76b570cf0ac1d93745 fix: createOrUpdate for category & subject
 
 9fac32bdd5201847f77eceb4eae1e9eb015e2063 docs: update changelog
