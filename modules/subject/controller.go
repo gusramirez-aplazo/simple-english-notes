@@ -34,8 +34,6 @@ func createSubjectControllerFactory(
 			})
 		}
 
-		subject.Description = strings.TrimSpace(subject.Description)
-
 		if err := repository.GetItemOrCreate(subject); err != nil {
 			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"success": false,
@@ -46,13 +44,8 @@ func createSubjectControllerFactory(
 
 		return context.Status(fiber.StatusCreated).JSON(fiber.Map{
 			"success": true,
-			"content": fiber.Map{
-				"subjectId":   subject.SubjectID,
-				"name":        subject.Name,
-				"description": subject.Description,
-				"createdAt":   subject.CreatedAt,
-			},
-			"error": nil,
+			"content": subject,
+			"error":   nil,
 		})
 	}
 }
@@ -71,18 +64,7 @@ func getSubjectsControllerFactory(
 			})
 		}
 
-		var formattedSubjects []fiber.Map
-
-		for i := 0; i < len(subjects); i++ {
-			formattedSubjects = append(formattedSubjects, fiber.Map{
-				"subjectId":   subjects[i].SubjectID,
-				"name":        subjects[i].Name,
-				"description": subjects[i].Description,
-				"createdAt":   subjects[i].CreatedAt,
-			})
-		}
-
-		if len(formattedSubjects) == 0 {
+		if len(subjects) == 0 {
 			return context.Status(fiber.StatusOK).JSON(fiber.Map{
 				"success": true,
 				"content": []fiber.Map{},
@@ -92,7 +74,7 @@ func getSubjectsControllerFactory(
 
 		return context.Status(fiber.StatusOK).JSON(fiber.Map{
 			"success": true,
-			"content": formattedSubjects,
+			"content": subjects,
 			"error":   nil,
 		})
 	}
@@ -128,13 +110,8 @@ func getSubjectByIdControllerFactory(
 
 		return context.Status(fiber.StatusOK).JSON(&fiber.Map{
 			"success": true,
-			"content": fiber.Map{
-				"subjectId":   subject.SubjectID,
-				"name":        subject.Name,
-				"description": subject.Description,
-				"createdAt":   subject.CreatedAt,
-			},
-			"error": nil,
+			"content": subject,
+			"error":   nil,
 		})
 	}
 }
@@ -172,13 +149,8 @@ func deleteSubjectByIdControllerFactory(
 
 		return context.Status(fiber.StatusAccepted).JSON(&fiber.Map{
 			"success": true,
-			"content": fiber.Map{
-				"subjectId":   subject.SubjectID,
-				"name":        subject.Name,
-				"description": subject.Description,
-				"deletedAt":   subject.DeletedAt,
-			},
-			"error": nil,
+			"content": subject,
+			"error":   nil,
 		})
 	}
 }
@@ -224,7 +196,6 @@ func updateSubjectByIdControllerFactory(
 
 		proposedSubject.Name = strings.TrimSpace(proposedSubject.Name)
 		proposedSubject.Name = strings.ToLower(proposedSubject.Name)
-		proposedSubject.Description = strings.TrimSpace(proposedSubject.Description)
 
 		if proposedSubject.Name == "" {
 			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -238,22 +209,12 @@ func updateSubjectByIdControllerFactory(
 			subject.Name = proposedSubject.Name
 		}
 
-		if proposedSubject.Description != "" &&
-			subject.Description != proposedSubject.Description {
-			subject.Description = proposedSubject.Description
-		}
-
 		repository.UpdateItem(&subject)
 
 		return context.Status(fiber.StatusOK).JSON(fiber.Map{
 			"success": true,
-			"content": fiber.Map{
-				"id":          subject.SubjectID,
-				"name":        subject.Name,
-				"description": subject.Description,
-				"updatedAt":   subject.UpdatedAt,
-			},
-			"error": nil,
+			"content": subject,
+			"error":   nil,
 		})
 
 	}

@@ -3,7 +3,6 @@ package category
 import (
 	"github.com/gusramirez-aplazo/simple-english-notes/modules/shared/entities"
 	"gorm.io/gorm"
-	"log"
 )
 
 type Repository struct {
@@ -25,20 +24,6 @@ func GetCategoryRepository(
 		}
 	}
 	return repository
-}
-
-func (repo *Repository) AsyncGet(
-	categories chan<- *entities.Category,
-	category *entities.Category,
-) {
-
-	transaction := getCurrentClientDB().Begin()
-	transaction.FirstOrCreate(category)
-	transaction.Commit()
-
-	log.Println(category)
-
-	categories <- category
 }
 
 func (repo *Repository) GetItem(

@@ -23,18 +23,7 @@ func getAllCategoriesControllerFactory(
 				})
 		}
 
-		var formattedCategories []fiber.Map
-
-		for i := 0; i < len(categories); i++ {
-			formattedCategories = append(formattedCategories, fiber.Map{
-				"categoryId":  categories[i].CategoryID,
-				"name":        categories[i].Name,
-				"description": categories[i].Description,
-				"createdAt":   categories[i].CreatedAt,
-			})
-		}
-
-		if len(formattedCategories) == 0 {
+		if len(categories) == 0 {
 			return context.Status(fiber.StatusOK).JSON(fiber.Map{
 				"success": true,
 				"content": []fiber.Map{},
@@ -44,7 +33,7 @@ func getAllCategoriesControllerFactory(
 
 		return context.Status(fiber.StatusOK).JSON(fiber.Map{
 			"success": true,
-			"content": formattedCategories,
+			"content": categories,
 			"error":   nil,
 		})
 	}
@@ -66,7 +55,6 @@ func createCategoryControllerFactory(
 
 		category.Name = strings.TrimSpace(category.Name)
 		category.Name = strings.ToLower(category.Name)
-		category.Description = strings.TrimSpace(category.Description)
 
 		if err := repository.GetItemOrCreate(category); err != nil {
 			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -78,13 +66,8 @@ func createCategoryControllerFactory(
 
 		return context.Status(fiber.StatusCreated).JSON(fiber.Map{
 			"success": true,
-			"content": fiber.Map{
-				"categoryId":  category.CategoryID,
-				"name":        category.Name,
-				"description": category.Description,
-				"createdAt":   category.CreatedAt,
-			},
-			"error": nil,
+			"content": category,
+			"error":   nil,
 		})
 	}
 }
@@ -119,13 +102,8 @@ func getCategoryByIdControllerFactory(
 
 		return context.Status(fiber.StatusOK).JSON(fiber.Map{
 			"success": true,
-			"content": fiber.Map{
-				"categoryId":  category.CategoryID,
-				"name":        category.Name,
-				"description": category.Description,
-				"createdAt":   category.CreatedAt,
-			},
-			"error": nil,
+			"content": category,
+			"error":   nil,
 		})
 	}
 }
@@ -162,13 +140,8 @@ func deleteCategoryByIdControllerFactory(
 
 		return context.Status(fiber.StatusAccepted).JSON(fiber.Map{
 			"success": true,
-			"content": fiber.Map{
-				"categoryId":  category.CategoryID,
-				"name":        category.Name,
-				"description": category.Description,
-				"deletedAt":   category.DeletedAt,
-			},
-			"error": nil,
+			"content": category,
+			"error":   nil,
 		})
 	}
 }
@@ -213,7 +186,6 @@ func updateCategoryByIdControllerFactory(
 
 		proposedCategory.Name = strings.TrimSpace(proposedCategory.Name)
 		proposedCategory.Name = strings.ToLower(proposedCategory.Name)
-		proposedCategory.Description = strings.TrimSpace(proposedCategory.Description)
 
 		if proposedCategory.Name == "" {
 			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -227,22 +199,12 @@ func updateCategoryByIdControllerFactory(
 			category.Name = proposedCategory.Name
 		}
 
-		if proposedCategory.Description != "" &&
-			category.Description != proposedCategory.Description {
-			category.Description = proposedCategory.Description
-		}
-
 		repository.UpdateItem(&category)
 
 		return context.Status(fiber.StatusOK).JSON(fiber.Map{
 			"success": true,
-			"content": fiber.Map{
-				"categoryId":  category.CategoryID,
-				"name":        category.Name,
-				"description": category.Description,
-				"updatedAt":   category.UpdatedAt,
-			},
-			"error": nil,
+			"content": category,
+			"error":   nil,
 		})
 
 	}

@@ -24,13 +24,6 @@ func GetSubjectRepository(clientDB *gorm.DB) *Repository {
 	return repository
 }
 
-func (repo *Repository) CreateMany(
-	subjects *[]entities.Subject,
-) {
-	getCurrentClientDB().
-		Create(&subjects)
-}
-
 func (repo *Repository) GetItem(
 	subject *entities.Subject,
 ) {

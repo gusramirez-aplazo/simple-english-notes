@@ -17,7 +17,7 @@ func createCornellNoteControllerFactory(
 	categoryRepo *category.Repository,
 ) func(*fiber.Ctx) error {
 	return func(context *fiber.Ctx) error {
-		requestBody := new(entities.CornellNoteRequest)
+		requestBody := new(entities.CornellNote)
 
 		if err := context.BodyParser(requestBody); err != nil {
 			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -58,9 +58,6 @@ func createCornellNoteControllerFactory(
 				})
 		}
 
-		var subjects []entities.Subject
-		var categories []entities.Category
-
 		for i := 0; i < len(requestBody.Subjects); i++ {
 			requestBody.Subjects[i].Name = strings.TrimSpace(
 				requestBody.Subjects[i].Name,
@@ -79,33 +76,28 @@ func createCornellNoteControllerFactory(
 					})
 			}
 
-			requestBody.Subjects[i].Description = strings.TrimSpace(requestBody.Subjects[i].Description)
+			clientDB.First(
+				&requestBody.Subjects[i],
+				"name=?",
+				requestBody.Subjects[i].Name,
+			)
 
-			currSubject := entities.Subject{
-				Name:        requestBody.Subjects[i].Name,
-				Description: requestBody.Subjects[i].Description,
-			}
-
-			subjects = append(subjects, currSubject)
 		}
 
 		clientDB.
-			Create(&subjects)
+			Create(&requestBody.Subjects)
 
-		fd := requestBody.Categories
+		for i := 0; i < len(requestBody.Categories); i++ {
 
-		for i, categ := range fd {
-			o := categ
-
-			o.Name = strings.TrimSpace(
-				o.Name,
+			requestBody.Categories[i].Name = strings.TrimSpace(
+				requestBody.Categories[i].Name,
 			)
 
-			o.Name = strings.ToLower(
-				o.Name,
+			requestBody.Categories[i].Name = strings.ToLower(
+				requestBody.Categories[i].Name,
 			)
 
-			if len(o.Name) == 0 {
+			if len(requestBody.Categories[i].Name) == 0 {
 				return context.Status(fiber.StatusBadRequest).
 					JSON(fiber.Map{
 						"success": false,
@@ -114,36 +106,19 @@ func createCornellNoteControllerFactory(
 					})
 			}
 
-			o.Description = strings.TrimSpace(o.Description)
-
-			currCategory := entities.Category{
-				Name:        o.Name,
-				Description: o.Description,
-			}
-			categories = append(categories, currCategory)
+			clientDB.First(
+				&requestBody.Categories[i],
+				"name=?",
+				requestBody.Categories[i].Name,
+			)
 		}
 
-		clientDB.Create(&categories)
-
-		var ts []entities.Subject
-		var cs []entities.Category
-
-		for _, t := range subjects {
-			clientDB.First(&t, "name=?", t.Name)
-
-			ts = append(ts, t)
-		}
-
-		for _, c := range categories {
-			clientDB.First(&c, "name=?", c.Name)
-
-			cs = append(cs, c)
-		}
+		clientDB.Create(&requestBody.Categories)
 
 		cornellNote := entities.CornellNote{
 			Topic:      requestBody.Topic,
-			Subjects:   ts,
-			Categories: cs,
+			Subjects:   requestBody.Subjects,
+			Categories: requestBody.Categories,
 		}
 
 		dbCreationResponse := clientDB.
