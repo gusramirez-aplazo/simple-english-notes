@@ -1,4 +1,8 @@
 ## All Changes
+8b8508e9f34793e703845beb5f2de45c71d2e51c fix: category and subject entrypoint queryparam
+
+cf826e5a0ac319ddf199f63a1e830f09c4ec1c5e docs: update changelog
+
 536dc95315791dbc343d013d279dd503f320e209 refactor: clean unused code
 
 497c0c1680fc32a38b4cf6141d684c66f80794d6 docs: update changelog
