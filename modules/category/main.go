@@ -25,9 +25,11 @@ func StartCategoryModule(
 
 	router.Get(basePath, getAllCategoriesControllerFactory(repo))
 
-	router.Get(basePath+"/:topicId", getCategoryByIdControllerFactory(repo))
+	router.Get(basePath+"/:categoryId", getCategoryByIdControllerFactory(repo))
 
-	router.Put(basePath+"/:topicId", updateCategoryByIdControllerFactory(repo))
+	router.Get(basePath+"/name/:categoryName", getCategoryByNameControllerFactory(repo))
 
-	router.Delete(basePath+"/:topicId", deleteCategoryByIdControllerFactory(repo))
+	router.Put(basePath+"/:categoryId", updateCategoryByIdControllerFactory(repo))
+
+	router.Delete(basePath+"/:categoryId", deleteCategoryByIdControllerFactory(repo))
 }

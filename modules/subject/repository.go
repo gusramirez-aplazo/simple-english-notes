@@ -27,13 +27,19 @@ func GetSubjectRepository(clientDB *gorm.DB) *Repository {
 func (repo *Repository) GetItem(
 	subject *entities.Subject,
 ) {
+	getCurrentClientDB().First(&subject)
+}
+
+func (repo *Repository) GetItemByName(
+	subject *entities.Subject,
+) {
 	getCurrentClientDB().First(&subject, "name=?", subject.Name)
 }
 
 func (repo *Repository) GetItemOrCreate(
 	subject *entities.Subject,
 ) error {
-	repo.GetItem(subject)
+	repo.GetItemByName(subject)
 	if subject.SubjectID != 0 {
 		return nil
 	}

@@ -116,6 +116,43 @@ func getSubjectByIdControllerFactory(
 	}
 }
 
+func getSubjectByNameControllerFactory(
+	repository *Repository,
+) func(ctx *fiber.Ctx) error {
+	return func(context *fiber.Ctx) error {
+		name := context.Params("subjectName")
+
+		trimmedName := strings.TrimSpace(name)
+		lowerName := strings.ToLower(trimmedName)
+
+		if len(lowerName) == 0 {
+			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"content": nil,
+				"error":   "The subject name is required",
+			})
+		}
+
+		subject := entities.Subject{Name: lowerName}
+
+		repository.GetItemByName(&subject)
+
+		if subject.SubjectID == 0 {
+			return context.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"success": false,
+				"content": nil,
+				"error":   "Subject not found",
+			})
+		}
+
+		return context.Status(fiber.StatusOK).JSON(fiber.Map{
+			"success": true,
+			"content": subject,
+			"error":   nil,
+		})
+	}
+}
+
 // TODO: prevent delete when at least 1 Cornell Note is an Owner
 func deleteSubjectByIdControllerFactory(
 	repository *Repository,

@@ -29,13 +29,19 @@ func GetCategoryRepository(
 func (repo *Repository) GetItem(
 	category *entities.Category,
 ) {
+	getCurrentClientDB().First(&category)
+}
+
+func (repo *Repository) GetItemByName(
+	category *entities.Category,
+) {
 	getCurrentClientDB().First(&category, "name=?", category.Name)
 }
 
 func (repo *Repository) GetItemOrCreate(
 	category *entities.Category,
 ) error {
-	repo.GetItem(category)
+	repo.GetItemByName(category)
 
 	if category.CategoryID != 0 {
 		return nil

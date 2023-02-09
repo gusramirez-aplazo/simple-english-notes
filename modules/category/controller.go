@@ -72,6 +72,43 @@ func createCategoryControllerFactory(
 	}
 }
 
+func getCategoryByNameControllerFactory(
+	repository *Repository,
+) func(ctx *fiber.Ctx) error {
+	return func(context *fiber.Ctx) error {
+		name := context.Params("categoryName")
+
+		trimmedName := strings.TrimSpace(name)
+		lowerName := strings.ToLower(trimmedName)
+
+		if len(lowerName) == 0 {
+			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"content": nil,
+				"error":   "The category name is required",
+			})
+		}
+
+		category := entities.Category{Name: lowerName}
+
+		repository.GetItemByName(&category)
+
+		if category.CategoryID == 0 {
+			return context.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"success": false,
+				"content": nil,
+				"error":   "Category not found",
+			})
+		}
+
+		return context.Status(fiber.StatusOK).JSON(fiber.Map{
+			"success": true,
+			"content": category,
+			"error":   nil,
+		})
+	}
+}
+
 func getCategoryByIdControllerFactory(
 	repository *Repository,
 ) func(ctx *fiber.Ctx) error {

@@ -25,9 +25,11 @@ func StartSubjectModule(
 
 	router.Get(basePath, getSubjectsControllerFactory(repo))
 
-	router.Get(basePath+"/:topicId", getSubjectByIdControllerFactory(repo))
+	router.Get(basePath+"/:subjectId", getSubjectByIdControllerFactory(repo))
 
-	router.Put(basePath+"/:topicId", updateSubjectByIdControllerFactory(repo))
+	router.Get(basePath+"/name/:subjectName", getSubjectByNameControllerFactory(repo))
 
-	router.Delete(basePath+"/:topicId", deleteSubjectByIdControllerFactory(repo))
+	router.Put(basePath+"/:subjectId", updateSubjectByIdControllerFactory(repo))
+
+	router.Delete(basePath+"/:subjectId", deleteSubjectByIdControllerFactory(repo))
 }
