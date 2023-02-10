@@ -11,5 +11,5 @@ type CornellNote struct {
 	Categories    []Category `gorm:"many2many:cornell_categories;foreignKey:CornellNoteID" json:"categories"` // Dictionary, Math, Something else, etc
 	Subjects      []Subject  `gorm:"many2many:cornell_subjects;foreignKey:CornellNoteID" json:"subjects"`     // Noun, Verb, Calculus, etc
 	Topic         string     `gorm:"not null;unique" json:"topic"`                                            // Stem, Limit, Struct
-	//Prompt        []RecallPrompt     `json:"prompts"`                                          // Limit in Math is we want to know ...
+	Notes         []Note     `gorm:"not null;foreignKey:NoteID" json:"notes"`
 }

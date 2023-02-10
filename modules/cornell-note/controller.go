@@ -58,6 +58,15 @@ func createCornellNoteControllerFactory(
 				})
 		}
 
+		if len(requestBody.Notes) == 0 {
+			return context.Status(fiber.StatusBadRequest).
+				JSON(fiber.Map{
+					"success": false,
+					"content": nil,
+					"error":   "Add at least 1 note",
+				})
+		}
+
 		for i := 0; i < len(requestBody.Subjects); i++ {
 			requestBody.Subjects[i].Name = strings.TrimSpace(
 				requestBody.Subjects[i].Name,
@@ -115,10 +124,33 @@ func createCornellNoteControllerFactory(
 
 		clientDB.Create(&requestBody.Categories)
 
+		for i := 0; i < len(requestBody.Notes); i++ {
+			requestBody.Notes[i].Content = strings.TrimSpace(
+				requestBody.Notes[i].Content,
+			)
+
+			requestBody.Notes[i].Cue = strings.TrimSpace(
+				requestBody.Notes[i].Cue,
+			)
+
+			if len(requestBody.Notes[i].Content) == 0 {
+				return context.Status(fiber.StatusBadRequest).
+					JSON(fiber.Map{
+						"success": false,
+						"content": nil,
+						"error":   fmt.Sprintf("Note content in position %v is empty", i+1),
+					})
+			}
+		}
+
+		clientDB.
+			Create(&requestBody.Notes)
+
 		cornellNote := entities.CornellNote{
 			Topic:      requestBody.Topic,
 			Subjects:   requestBody.Subjects,
 			Categories: requestBody.Categories,
+			Notes:      requestBody.Notes,
 		}
 
 		dbCreationResponse := clientDB.

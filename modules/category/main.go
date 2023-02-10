@@ -7,7 +7,7 @@ import (
 	"log"
 )
 
-func StartCategoryModule(
+func Start(
 	clientDB *gorm.DB,
 	router fiber.Router,
 ) {

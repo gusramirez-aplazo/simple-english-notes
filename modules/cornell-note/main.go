@@ -9,7 +9,7 @@ import (
 	"log"
 )
 
-func StartCornellNoteModule(
+func Start(
 	clientDB *gorm.DB,
 	router fiber.Router,
 ) {

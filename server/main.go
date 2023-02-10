@@ -6,8 +6,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gusramirez-aplazo/simple-english-notes/modules/category"
 	"github.com/gusramirez-aplazo/simple-english-notes/modules/cornell-note"
+	"github.com/gusramirez-aplazo/simple-english-notes/modules/database"
+	"github.com/gusramirez-aplazo/simple-english-notes/modules/note"
 	"github.com/gusramirez-aplazo/simple-english-notes/modules/subject"
-	"github.com/gusramirez-aplazo/simple-english-notes/pakages/database"
 	"log"
 )
 
@@ -39,11 +40,13 @@ func main() {
 
 	currentVersionedRoutes := apiRoutes.Group(versionPrefix)
 
-	subject.StartSubjectModule(database.GetDbClient(), currentVersionedRoutes)
+	subject.Start(database.GetDbClient(), currentVersionedRoutes)
 
-	category.StartCategoryModule(database.GetDbClient(), currentVersionedRoutes)
+	category.Start(database.GetDbClient(), currentVersionedRoutes)
 
-	cornellNote.StartCornellNoteModule(database.GetDbClient(), currentVersionedRoutes)
+	note.Start(database.GetDbClient(), currentVersionedRoutes)
+
+	cornellNote.Start(database.GetDbClient(), currentVersionedRoutes)
 
 	log.Printf("Server listen on port: %v", port)
 
