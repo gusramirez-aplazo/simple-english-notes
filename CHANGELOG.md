@@ -1,4 +1,8 @@
 ## All Changes
+14b89392e2f8043ccb2c74c5e405fe87abd0c825 feat: add topic model,repository,controller,start
+
+b1108e39a2abe2f47c8a016bc0fd4c0fbef738eb docs: update changelog
+
 553097885666f30fbf0898efb5f7a80bd84fa596 feat: add note model,repository,controller,start
 
 ee3670828c564ac79c226f9bc8bd312de565480f docs: update changelog
