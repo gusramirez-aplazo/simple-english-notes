@@ -17,19 +17,19 @@ func Start(
 		log.Fatal(migrationErr)
 	}
 
-	repo := GetCategoryRepository(clientDB)
+	repo := GetRepository(clientDB)
 
 	const basePath = "/category"
 
-	router.Post(basePath, createCategoryControllerFactory(repo))
+	router.Post(basePath, creationControllerFactory(repo))
 
-	router.Get(basePath, getAllCategoriesControllerFactory(repo))
+	router.Get(basePath, getAllItemsControllerFactory(repo))
 
-	router.Get(basePath+"/:categoryId", getCategoryByIdControllerFactory(repo))
+	router.Get(basePath+"/:categoryId", getItemByIdControllerFactory(repo))
 
-	router.Get(basePath+"/name/:categoryName", getCategoryByNameControllerFactory(repo))
+	router.Get(basePath+"/name/:categoryName", getItemByNameControllerFactory(repo))
 
-	router.Put(basePath+"/:categoryId", updateCategoryByIdControllerFactory(repo))
+	router.Put(basePath+"/:categoryId", updateItemByIdControllerFactory(repo))
 
-	router.Delete(basePath+"/:categoryId", deleteCategoryByIdControllerFactory(repo))
+	router.Delete(basePath+"/:categoryId", deleteItemByIdControllerFactory(repo))
 }

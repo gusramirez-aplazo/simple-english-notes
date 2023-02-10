@@ -1,4 +1,4 @@
-package subject
+package topic
 
 import (
 	"github.com/gofiber/fiber/v2"
@@ -11,25 +11,24 @@ func Start(
 	clientDB *gorm.DB,
 	router fiber.Router,
 ) {
-	migrationErr := clientDB.AutoMigrate(entities.Subject{})
+
+	migrationErr := clientDB.AutoMigrate(entities.Topic{})
 
 	if migrationErr != nil {
 		log.Fatal(migrationErr)
 	}
 
-	const basePath = "/subject"
-
 	repo := GetRepository(clientDB)
+
+	const basePath = "/topic"
 
 	router.Post(basePath, creationControllerFactory(repo))
 
 	router.Get(basePath, getAllItemsControllerFactory(repo))
 
-	router.Get(basePath+"/:subjectId", getItemByIdControllerFactory(repo))
+	router.Get(basePath+"/:topicId", getItemByIdControllerFactory(repo))
 
-	router.Get(basePath+"/name/:subjectName", getItemByNameControllerFactory(repo))
+	router.Delete(basePath+"/:topicId", deleteItemByIdControllerFactory(repo))
 
-	router.Put(basePath+"/:subjectId", updateItemByIdControllerFactory(repo))
-
-	router.Delete(basePath+"/:subjectId", deleteItemByIdControllerFactory(repo))
+	router.Put(basePath+"/:topicId", updateItemByIdControllerFactory(repo))
 }

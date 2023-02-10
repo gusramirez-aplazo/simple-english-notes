@@ -1,4 +1,4 @@
-package subject
+package topic
 
 import (
 	"github.com/gusramirez-aplazo/simple-english-notes/modules/shared/entities"
@@ -15,7 +15,9 @@ func getCurrentClientDB() *gorm.DB {
 	return *&repository.ClientDB
 }
 
-func GetRepository(clientDB *gorm.DB) *Repository {
+func GetRepository(
+	clientDB *gorm.DB,
+) *Repository {
 	if repository == nil {
 		repository = &Repository{
 			ClientDB: clientDB,
@@ -25,21 +27,22 @@ func GetRepository(clientDB *gorm.DB) *Repository {
 }
 
 func (repo *Repository) GetItemById(
-	subject *entities.Subject,
+	topic *entities.Topic,
 ) {
-	getCurrentClientDB().First(&subject, "subject_id=?", subject.SubjectID)
+	getCurrentClientDB().First(&topic, "topic_id=?", topic.TopicID)
 }
 
 func (repo *Repository) GetItemByName(
-	subject *entities.Subject,
+	topic *entities.Topic,
 ) {
-	getCurrentClientDB().First(&subject, "name=?", subject.Name)
+	getCurrentClientDB().First(&topic, "name=?", topic.Name)
 }
 
 func (repo *Repository) CreateItem(
-	subject *entities.Subject,
+	topic *entities.Topic,
 ) error {
-	dbCreationResult := repo.ClientDB.Create(&subject)
+
+	dbCreationResult := getCurrentClientDB().Create(&topic)
 
 	if dbCreationResult.Error != nil {
 		return dbCreationResult.Error
@@ -49,9 +52,9 @@ func (repo *Repository) CreateItem(
 }
 
 func (repo *Repository) GetAllItems(
-	subjects *[]entities.Subject,
+	notes *[]entities.Topic,
 ) error {
-	findAllErr := getCurrentClientDB().Find(&subjects)
+	findAllErr := getCurrentClientDB().Find(&notes)
 
 	if findAllErr.Error != nil {
 		return findAllErr.Error
@@ -61,13 +64,13 @@ func (repo *Repository) GetAllItems(
 }
 
 func (repo *Repository) DeleteItem(
-	subject *entities.Subject,
+	topic *entities.Topic,
 ) {
-	getCurrentClientDB().Delete(&subject)
+	getCurrentClientDB().Delete(&topic)
 }
 
 func (repo *Repository) UpdateItem(
-	subject *entities.Subject,
+	topic *entities.Topic,
 ) {
-	getCurrentClientDB().Save(&subject)
+	getCurrentClientDB().Save(&topic)
 }

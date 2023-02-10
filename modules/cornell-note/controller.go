@@ -4,17 +4,21 @@ import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gusramirez-aplazo/simple-english-notes/modules/category"
+	"github.com/gusramirez-aplazo/simple-english-notes/modules/note"
 	"github.com/gusramirez-aplazo/simple-english-notes/modules/shared/entities"
 	"github.com/gusramirez-aplazo/simple-english-notes/modules/subject"
+	"github.com/gusramirez-aplazo/simple-english-notes/modules/topic"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"strings"
 )
 
-func createCornellNoteControllerFactory(
+func creationControllerFactory(
 	clientDB *gorm.DB,
+	topicRepo *topic.Repository,
 	subjectRepo *subject.Repository,
 	categoryRepo *category.Repository,
+	noteRepo *note.Repository,
 ) func(*fiber.Ctx) error {
 	return func(context *fiber.Ctx) error {
 		requestBody := new(entities.CornellNote)
@@ -23,20 +27,30 @@ func createCornellNoteControllerFactory(
 			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"success": false,
 				"content": nil,
-				"error":   err.Error(),
+				"error":   fmt.Sprintf("Ensure the correct data is sent to the server. Error: %v", err.Error()),
 			})
-
 		}
 
-		requestBody.Topic = strings.TrimSpace(requestBody.Topic)
-		requestBody.Topic = strings.ToLower(requestBody.Topic)
+		requestBody.Topic.Name = strings.TrimSpace(requestBody.Topic.Name)
+		requestBody.Topic.Name = strings.ToLower(requestBody.Topic.Name)
 
-		if requestBody.Topic == "" {
+		if requestBody.Topic.Name == "" {
 			return context.Status(fiber.StatusBadRequest).
 				JSON(fiber.Map{
 					"success": false,
 					"content": nil,
-					"error":   "Topic/Title is required",
+					"error":   "Topic is required",
+				})
+		}
+
+		topicRepo.GetItemByName(&requestBody.Topic)
+
+		if requestBody.Topic.TopicID != 0 {
+			return context.Status(fiber.StatusBadRequest).
+				JSON(fiber.Map{
+					"success": false,
+					"content": nil,
+					"error":   "The requested topic name is already created, try to update it instead",
 				})
 		}
 
@@ -68,6 +82,18 @@ func createCornellNoteControllerFactory(
 		}
 
 		for i := 0; i < len(requestBody.Subjects); i++ {
+			if requestBody.Subjects[i].SubjectID == 0 {
+				return context.Status(fiber.StatusBadRequest).
+					JSON(fiber.Map{
+						"success": false,
+						"content": nil,
+						"error": fmt.Sprintf(
+							"Subject %v does not have ID",
+							requestBody.Subjects[i].Name,
+						),
+					})
+			}
+
 			requestBody.Subjects[i].Name = strings.TrimSpace(
 				requestBody.Subjects[i].Name,
 			)
@@ -85,19 +111,21 @@ func createCornellNoteControllerFactory(
 					})
 			}
 
-			clientDB.First(
-				&requestBody.Subjects[i],
-				"name=?",
-				requestBody.Subjects[i].Name,
-			)
-
+			subjectRepo.GetItemById(&requestBody.Subjects[i])
 		}
 
-		clientDB.
-			Create(&requestBody.Subjects)
-
 		for i := 0; i < len(requestBody.Categories); i++ {
-
+			if requestBody.Categories[i].CategoryID == 0 {
+				return context.Status(fiber.StatusBadRequest).
+					JSON(fiber.Map{
+						"success": false,
+						"content": nil,
+						"error": fmt.Sprintf(
+							"Category %v does not have ID",
+							requestBody.Categories[i].Name,
+						),
+					})
+			}
 			requestBody.Categories[i].Name = strings.TrimSpace(
 				requestBody.Categories[i].Name,
 			)
@@ -115,16 +143,22 @@ func createCornellNoteControllerFactory(
 					})
 			}
 
-			clientDB.First(
-				&requestBody.Categories[i],
-				"name=?",
-				requestBody.Categories[i].Name,
-			)
+			categoryRepo.GetItem(&requestBody.Categories[i])
 		}
 
-		clientDB.Create(&requestBody.Categories)
-
 		for i := 0; i < len(requestBody.Notes); i++ {
+			if requestBody.Notes[i].NoteID == 0 {
+				return context.Status(fiber.StatusBadRequest).
+					JSON(fiber.Map{
+						"success": false,
+						"content": nil,
+						"error": fmt.Sprintf(
+							"Note at position %v does not have ID",
+							i+1,
+						),
+					})
+			}
+
 			requestBody.Notes[i].Content = strings.TrimSpace(
 				requestBody.Notes[i].Content,
 			)
@@ -138,13 +172,15 @@ func createCornellNoteControllerFactory(
 					JSON(fiber.Map{
 						"success": false,
 						"content": nil,
-						"error":   fmt.Sprintf("Note content in position %v is empty", i+1),
+						"error": fmt.Sprintf(
+							"Note content at position %v is empty",
+							i+1,
+						),
 					})
 			}
-		}
 
-		clientDB.
-			Create(&requestBody.Notes)
+			noteRepo.GetItem(&requestBody.Notes[i])
+		}
 
 		cornellNote := entities.CornellNote{
 			Topic:      requestBody.Topic,

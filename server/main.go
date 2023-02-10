@@ -9,6 +9,7 @@ import (
 	"github.com/gusramirez-aplazo/simple-english-notes/modules/database"
 	"github.com/gusramirez-aplazo/simple-english-notes/modules/note"
 	"github.com/gusramirez-aplazo/simple-english-notes/modules/subject"
+	"github.com/gusramirez-aplazo/simple-english-notes/modules/topic"
 	"log"
 )
 
@@ -45,6 +46,8 @@ func main() {
 	category.Start(database.GetDbClient(), currentVersionedRoutes)
 
 	note.Start(database.GetDbClient(), currentVersionedRoutes)
+
+	topic.Start(database.GetDbClient(), currentVersionedRoutes)
 
 	cornellNote.Start(database.GetDbClient(), currentVersionedRoutes)
 

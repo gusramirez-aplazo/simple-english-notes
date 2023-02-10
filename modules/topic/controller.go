@@ -1,4 +1,4 @@
-package category
+package topic
 
 import (
 	"fmt"
@@ -8,44 +8,13 @@ import (
 	"strings"
 )
 
-func getAllItemsControllerFactory(
-	repository *Repository,
-) func(*fiber.Ctx) error {
-	return func(context *fiber.Ctx) error {
-		var categories []entities.Category
-
-		if err := repository.GetAllItems(&categories); err != nil {
-			return context.Status(fiber.StatusInternalServerError).
-				JSON(fiber.Map{
-					"success": false,
-					"content": nil,
-					"error":   err.Error(),
-				})
-		}
-
-		if len(categories) == 0 {
-			return context.Status(fiber.StatusOK).JSON(fiber.Map{
-				"success": true,
-				"content": []fiber.Map{},
-				"error":   nil,
-			})
-		}
-
-		return context.Status(fiber.StatusOK).JSON(fiber.Map{
-			"success": true,
-			"content": categories,
-			"error":   nil,
-		})
-	}
-}
-
 func creationControllerFactory(
 	repository *Repository,
 ) func(*fiber.Ctx) error {
 	return func(context *fiber.Ctx) error {
-		category := new(entities.Category)
+		topic := new(entities.Topic)
 
-		if err := context.BodyParser(category); err != nil {
+		if err := context.BodyParser(topic); err != nil {
 			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"success": false,
 				"content": nil,
@@ -53,10 +22,28 @@ func creationControllerFactory(
 			})
 		}
 
-		category.Name = strings.TrimSpace(category.Name)
-		category.Name = strings.ToLower(category.Name)
+		topic.Name = strings.TrimSpace(topic.Name)
+		topic.Name = strings.ToLower(topic.Name)
 
-		if err := repository.GetItemOrCreate(category); err != nil {
+		if topic.Name == "" {
+			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"content": nil,
+				"error":   "Topic name is required",
+			})
+		}
+
+		repository.GetItemByName(topic)
+
+		if topic.TopicID != 0 {
+			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"content": nil,
+				"error":   "Topic already created",
+			})
+		}
+
+		if err := repository.CreateItem(topic); err != nil {
 			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"success": false,
 				"content": nil,
@@ -66,44 +53,39 @@ func creationControllerFactory(
 
 		return context.Status(fiber.StatusCreated).JSON(fiber.Map{
 			"success": true,
-			"content": category,
+			"content": topic,
 			"error":   nil,
 		})
+
 	}
 }
 
-func getItemByNameControllerFactory(
+func getAllItemsControllerFactory(
 	repository *Repository,
-) func(ctx *fiber.Ctx) error {
+) func(*fiber.Ctx) error {
 	return func(context *fiber.Ctx) error {
-		name := context.Params("categoryName")
+		var topics []entities.Topic
 
-		trimmedName := strings.TrimSpace(name)
-		lowerName := strings.ToLower(trimmedName)
-
-		if len(lowerName) == 0 {
-			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"success": false,
-				"content": nil,
-				"error":   "The category name is required",
-			})
+		if err := repository.GetAllItems(&topics); err != nil {
+			return context.Status(fiber.StatusInternalServerError).
+				JSON(fiber.Map{
+					"success": false,
+					"content": nil,
+					"error":   err.Error(),
+				})
 		}
 
-		category := entities.Category{Name: lowerName}
-
-		repository.GetItemByName(&category)
-
-		if category.CategoryID == 0 {
-			return context.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"success": false,
-				"content": nil,
-				"error":   "Category not found",
+		if len(topics) == 0 {
+			return context.Status(fiber.StatusOK).JSON(fiber.Map{
+				"success": true,
+				"content": []fiber.Map{},
+				"error":   nil,
 			})
 		}
 
 		return context.Status(fiber.StatusOK).JSON(fiber.Map{
 			"success": true,
-			"content": category,
+			"content": topics,
 			"error":   nil,
 		})
 	}
@@ -113,7 +95,7 @@ func getItemByIdControllerFactory(
 	repository *Repository,
 ) func(ctx *fiber.Ctx) error {
 	return func(context *fiber.Ctx) error {
-		id := context.Params("categoryId")
+		id := context.Params("topicId")
 
 		parsedId, parsedIdErr := infra.ParseID(id)
 
@@ -125,11 +107,11 @@ func getItemByIdControllerFactory(
 			})
 		}
 
-		var category = entities.Category{CategoryID: parsedId}
+		var topic = entities.Topic{TopicID: parsedId}
 
-		repository.GetItem(&category)
+		repository.GetItemById(&topic)
 
-		if category.Name == "" {
+		if topic.Name == "" {
 			return context.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"success": false,
 				"content": nil,
@@ -139,7 +121,7 @@ func getItemByIdControllerFactory(
 
 		return context.Status(fiber.StatusOK).JSON(fiber.Map{
 			"success": true,
-			"content": category,
+			"content": topic,
 			"error":   nil,
 		})
 	}
@@ -149,7 +131,7 @@ func deleteItemByIdControllerFactory(
 	repository *Repository,
 ) func(ctx *fiber.Ctx) error {
 	return func(context *fiber.Ctx) error {
-		id := context.Params("categoryId")
+		id := context.Params("topicId")
 
 		parsedId, parsedIdErr := infra.ParseID(id)
 
@@ -161,11 +143,11 @@ func deleteItemByIdControllerFactory(
 			})
 		}
 
-		var category = entities.Category{CategoryID: parsedId}
+		var topic = entities.Topic{TopicID: parsedId}
 
-		repository.GetItem(&category)
+		repository.GetItemById(&topic)
 
-		if category.Name == "" {
+		if topic.Name == "" {
 			return context.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"success": false,
 				"content": nil,
@@ -173,11 +155,11 @@ func deleteItemByIdControllerFactory(
 			})
 		}
 
-		repository.DeleteItem(&category)
+		repository.DeleteItem(&topic)
 
 		return context.Status(fiber.StatusAccepted).JSON(fiber.Map{
 			"success": true,
-			"content": category,
+			"content": topic,
 			"error":   nil,
 		})
 	}
@@ -187,7 +169,7 @@ func updateItemByIdControllerFactory(
 	repository *Repository,
 ) func(ctx *fiber.Ctx) error {
 	return func(context *fiber.Ctx) error {
-		id := context.Params("categoryId")
+		id := context.Params("topicId")
 
 		parsedId, parsedIdErr := infra.ParseID(id)
 
@@ -199,11 +181,11 @@ func updateItemByIdControllerFactory(
 			})
 		}
 
-		var category = entities.Category{CategoryID: parsedId}
+		var topic = entities.Topic{TopicID: parsedId}
 
-		repository.GetItem(&category)
+		repository.GetItemById(&topic)
 
-		if category.Name == "" {
+		if topic.Name == "" {
 			return context.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"success": false,
 				"content": nil,
@@ -211,9 +193,9 @@ func updateItemByIdControllerFactory(
 			})
 		}
 
-		proposedCategory := new(entities.Category)
+		proposedItem := new(entities.Topic)
 
-		if err := context.BodyParser(proposedCategory); err != nil {
+		if err := context.BodyParser(proposedItem); err != nil {
 			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"success": false,
 				"content": nil,
@@ -221,26 +203,26 @@ func updateItemByIdControllerFactory(
 			})
 		}
 
-		proposedCategory.Name = strings.TrimSpace(proposedCategory.Name)
-		proposedCategory.Name = strings.ToLower(proposedCategory.Name)
+		topic.Name = strings.TrimSpace(topic.Name)
+		topic.Name = strings.ToLower(topic.Name)
 
-		if proposedCategory.Name == "" {
+		if proposedItem.Name == "" {
 			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"success": false,
 				"content": nil,
-				"error":   "Category Name is required",
+				"error":   "Topic name is required",
 			})
 		}
 
-		if category.Name != proposedCategory.Name {
-			category.Name = proposedCategory.Name
+		if topic.Name != proposedItem.Name {
+			topic.Name = proposedItem.Name
 		}
 
-		repository.UpdateItem(&category)
+		repository.UpdateItem(&topic)
 
 		return context.Status(fiber.StatusOK).JSON(fiber.Map{
 			"success": true,
-			"content": category,
+			"content": topic,
 			"error":   nil,
 		})
 

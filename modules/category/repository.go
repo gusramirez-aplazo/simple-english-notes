@@ -15,7 +15,7 @@ func getCurrentClientDB() *gorm.DB {
 	return *&repository.ClientDB
 }
 
-func GetCategoryRepository(
+func GetRepository(
 	clientDB *gorm.DB,
 ) *Repository {
 	if repository == nil {

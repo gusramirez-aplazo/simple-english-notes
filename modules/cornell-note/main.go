@@ -3,8 +3,10 @@ package cornellNote
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gusramirez-aplazo/simple-english-notes/modules/category"
+	"github.com/gusramirez-aplazo/simple-english-notes/modules/note"
 	"github.com/gusramirez-aplazo/simple-english-notes/modules/shared/entities"
 	"github.com/gusramirez-aplazo/simple-english-notes/modules/subject"
+	"github.com/gusramirez-aplazo/simple-english-notes/modules/topic"
 	"gorm.io/gorm"
 	"log"
 )
@@ -21,10 +23,12 @@ func Start(
 
 	const basePath = "/cornell"
 
-	router.Post(basePath, createCornellNoteControllerFactory(
+	router.Post(basePath, creationControllerFactory(
 		clientDB,
-		subject.GetSubjectRepository(clientDB),
-		category.GetCategoryRepository(clientDB),
+		topic.GetRepository(clientDB),
+		subject.GetRepository(clientDB),
+		category.GetRepository(clientDB),
+		note.GetRepository(clientDB),
 	))
 
 	router.Get(basePath, getAllCornellNoteControllerFactory(clientDB))

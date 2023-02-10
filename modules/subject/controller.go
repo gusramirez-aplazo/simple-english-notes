@@ -9,7 +9,7 @@ import (
 )
 
 // TODO: testing
-func createSubjectControllerFactory(
+func creationControllerFactory(
 	repository *Repository,
 ) func(*fiber.Ctx) error {
 	return func(context *fiber.Ctx) error {
@@ -34,7 +34,17 @@ func createSubjectControllerFactory(
 			})
 		}
 
-		if err := repository.GetItemOrCreate(subject); err != nil {
+		repository.GetItemByName(subject)
+
+		if subject.SubjectID != 0 {
+			return context.Status(fiber.StatusOK).JSON(fiber.Map{
+				"success": true,
+				"content": subject,
+				"error":   nil,
+			})
+		}
+
+		if err := repository.CreateItem(subject); err != nil {
 			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"success": false,
 				"content": nil,
@@ -50,7 +60,7 @@ func createSubjectControllerFactory(
 	}
 }
 
-func getSubjectsControllerFactory(
+func getAllItemsControllerFactory(
 	repository *Repository,
 ) func(*fiber.Ctx) error {
 	return func(context *fiber.Ctx) error {
@@ -80,7 +90,7 @@ func getSubjectsControllerFactory(
 	}
 }
 
-func getSubjectByIdControllerFactory(
+func getItemByIdControllerFactory(
 	repository *Repository,
 ) func(ctx *fiber.Ctx) error {
 	return func(context *fiber.Ctx) error {
@@ -98,7 +108,7 @@ func getSubjectByIdControllerFactory(
 
 		var subject = entities.Subject{SubjectID: parsedId}
 
-		repository.GetItem(&subject)
+		repository.GetItemById(&subject)
 
 		if subject.Name == "" {
 			return context.Status(fiber.StatusNotFound).JSON(&fiber.Map{
@@ -116,7 +126,7 @@ func getSubjectByIdControllerFactory(
 	}
 }
 
-func getSubjectByNameControllerFactory(
+func getItemByNameControllerFactory(
 	repository *Repository,
 ) func(ctx *fiber.Ctx) error {
 	return func(context *fiber.Ctx) error {
@@ -154,7 +164,7 @@ func getSubjectByNameControllerFactory(
 }
 
 // TODO: prevent delete when at least 1 Cornell Note is an Owner
-func deleteSubjectByIdControllerFactory(
+func deleteItemByIdControllerFactory(
 	repository *Repository,
 ) func(ctx *fiber.Ctx) error {
 	return func(context *fiber.Ctx) error {
@@ -172,7 +182,7 @@ func deleteSubjectByIdControllerFactory(
 
 		var subject = entities.Subject{SubjectID: parsedId}
 
-		repository.GetItem(&subject)
+		repository.GetItemById(&subject)
 
 		if subject.Name == "" {
 			return context.Status(fiber.StatusNotFound).JSON(&fiber.Map{
@@ -193,7 +203,7 @@ func deleteSubjectByIdControllerFactory(
 }
 
 // TODO: In which case don't allow update name ??
-func updateSubjectByIdControllerFactory(
+func updateItemByIdControllerFactory(
 	repository *Repository,
 ) func(ctx *fiber.Ctx) error {
 	return func(context *fiber.Ctx) error {
@@ -211,7 +221,7 @@ func updateSubjectByIdControllerFactory(
 
 		var subject = entities.Subject{SubjectID: parsedId}
 
-		repository.GetItem(&subject)
+		repository.GetItemById(&subject)
 
 		if subject.Name == "" {
 			return context.Status(fiber.StatusNotFound).JSON(&fiber.Map{
