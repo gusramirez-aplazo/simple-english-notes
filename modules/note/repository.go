@@ -12,7 +12,7 @@ type Repository struct {
 var repository *Repository
 
 func getCurrentClientDB() *gorm.DB {
-	return *&repository.ClientDB
+	return repository.ClientDB
 }
 
 func GetRepository(

@@ -1,7 +1,8 @@
 package category
 
 import (
-	"github.com/gusramirez-aplazo/simple-english-notes/modules/shared/entities"
+	"errors"
+	"github.com/gusramirez-aplazo/simple-english-notes/modules/shared/domain"
 	"gorm.io/gorm"
 )
 
@@ -12,7 +13,7 @@ type Repository struct {
 var repository *Repository
 
 func getCurrentClientDB() *gorm.DB {
-	return *&repository.ClientDB
+	return repository.ClientDB
 }
 
 func GetRepository(
@@ -26,56 +27,118 @@ func GetRepository(
 	return repository
 }
 
-func (repo *Repository) GetItem(
-	category *entities.Category,
-) {
-	getCurrentClientDB().First(&category)
-}
+func (repo *Repository) GetItemById(
+	id uint,
+) (domain.Category, error) {
+	resp := &domain.Category{}
 
-func (repo *Repository) GetItemByName(
-	category *entities.Category,
-) {
-	getCurrentClientDB().First(&category, "name=?", category.Name)
-}
+	getCurrentClientDB().
+		First(
+			resp,
+			"id=?",
+			id,
+		)
 
-func (repo *Repository) GetItemOrCreate(
-	category *entities.Category,
-) error {
-	repo.GetItemByName(category)
-
-	if category.CategoryID != 0 {
-		return nil
+	if resp.Name == "" {
+		return *resp, errors.New("item not found")
 	}
 
-	dbCreationResult := getCurrentClientDB().Create(&category)
+	return *resp, nil
+}
 
-	if dbCreationResult.Error != nil {
-		return dbCreationResult.Error
+func (repo *Repository) GetItemByUniqueParam(
+	name string,
+) (domain.Category, error) {
+	resp := domain.Category{}
+
+	query := getCurrentClientDB().
+		First(
+			&resp,
+			"name=?",
+			name,
+		)
+
+	if query.Error != nil {
+		return resp, query.Error
 	}
 
-	return nil
+	return resp, nil
 }
 
-func (repo *Repository) GetAllItems(
-	categories *[]entities.Category,
-) error {
-	findAllErr := getCurrentClientDB().Find(&categories)
-
-	if findAllErr.Error != nil {
-		return findAllErr.Error
+func (repo *Repository) CreateOne(
+	name string,
+) (domain.Category, error) {
+	resp := domain.Category{
+		Name: name,
 	}
 
-	return nil
+	query := getCurrentClientDB().
+		Create(resp)
+
+	if query.Error != nil {
+		return resp, query.Error
+	}
+
+	return resp, nil
 }
 
-func (repo *Repository) DeleteItem(
-	category *entities.Category,
-) {
-	getCurrentClientDB().Delete(&category)
+func (repo *Repository) GetAllItems() ([]domain.Category, error) {
+	var items []domain.Category
+
+	query := getCurrentClientDB().
+		Find(&items)
+
+	if query.Error != nil {
+		return items, query.Error
+	}
+
+	return items, nil
 }
 
-func (repo *Repository) UpdateItem(
-	category *entities.Category,
-) {
-	getCurrentClientDB().Save(&category)
+func (repo *Repository) DeleteOne(
+	id uint,
+) (domain.Category, error) {
+	item, err := repo.GetItemById(id)
+
+	if err != nil {
+		return item, err
+	}
+
+	query := getCurrentClientDB().
+		Delete(item)
+
+	if query.Error != nil {
+		return item, query.Error
+	}
+
+	return item, nil
+}
+
+func (repo *Repository) UpdateOne(
+	id uint,
+	name string,
+) (*domain.Category, error) {
+	var item *domain.Category
+
+	err := getCurrentClientDB().
+		First(
+			&item,
+			"id=?",
+			id,
+		).Error
+
+	if err != nil {
+		return item, err
+	}
+
+	if item.Name == "" {
+		return item, errors.New("item not found")
+	}
+
+	getCurrentClientDB().
+		Model(item).
+		Where("deleted_at=?", nil).
+		Update("name", name)
+
+	return item, nil
 }

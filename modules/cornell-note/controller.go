@@ -1,11 +1,13 @@
 package cornellNote
 
 import (
+	"errors"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gusramirez-aplazo/simple-english-notes/modules/category"
 	"github.com/gusramirez-aplazo/simple-english-notes/modules/note"
 	"github.com/gusramirez-aplazo/simple-english-notes/modules/shared/entities"
+	"github.com/gusramirez-aplazo/simple-english-notes/modules/shared/infra"
 	"github.com/gusramirez-aplazo/simple-english-notes/modules/subject"
 	"github.com/gusramirez-aplazo/simple-english-notes/modules/topic"
 	"gorm.io/gorm"
@@ -115,7 +117,7 @@ func creationControllerFactory(
 		}
 
 		for i := 0; i < len(requestBody.Categories); i++ {
-			if requestBody.Categories[i].CategoryID == 0 {
+			if requestBody.Categories[i].ID == 0 {
 				return context.Status(fiber.StatusBadRequest).
 					JSON(fiber.Map{
 						"success": false,
@@ -143,7 +145,29 @@ func creationControllerFactory(
 					})
 			}
 
-			categoryRepo.GetItem(&requestBody.Categories[i])
+			item, findErr := categoryRepo.
+				GetItemById(requestBody.Categories[i].ID)
+
+			if findErr != nil {
+				return infra.CustomResponse(
+					context,
+					fiber.StatusInternalServerError,
+					false,
+					nil,
+					findErr,
+				)
+			}
+
+			if item.ID == 0 {
+				return infra.CustomResponse(
+					context,
+					fiber.StatusNotFound,
+					false,
+					nil,
+					errors.New(fmt.Sprintf("Category at position %v not found", i+1)))
+			}
+
+			requestBody.Categories[i] = item
 		}
 
 		for i := 0; i < len(requestBody.Notes); i++ {
