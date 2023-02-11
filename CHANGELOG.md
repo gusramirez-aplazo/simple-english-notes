@@ -1,4 +1,8 @@
 ## All Changes
+6fdd7d6bfca7cb8a19f2add3dc4a959f756e6e04 feat: refactor subject module
+
+2c51ace6f21d070c6fe29a3cb8b515358357998c docs: update changelog
+
 fb45dc008e1c3f81030b773e06a30cf96e639aef fix:change response contract from error to message
 
 343fd0c5ce9e9a8456af9eed7e2b92ab44575589 docs: update changelog
