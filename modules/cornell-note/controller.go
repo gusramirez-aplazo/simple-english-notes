@@ -84,7 +84,7 @@ func creationControllerFactory(
 		}
 
 		for i := 0; i < len(requestBody.Subjects); i++ {
-			if requestBody.Subjects[i].SubjectID == 0 {
+			if requestBody.Subjects[i].ID == 0 {
 				return context.Status(fiber.StatusBadRequest).
 					JSON(fiber.Map{
 						"success": false,
@@ -113,7 +113,27 @@ func creationControllerFactory(
 					})
 			}
 
-			subjectRepo.GetItemById(&requestBody.Subjects[i])
+			item, findErr := subjectRepo.
+				GetItemById(requestBody.Subjects[i].ID)
+
+			if findErr != nil {
+				notFoundErr := errors.New(
+					fmt.Sprintf(
+						"subject at position %v not found",
+						i+1,
+					),
+				)
+
+				return infra.CustomResponse(
+					context,
+					fiber.StatusNotFound,
+					false,
+					nil,
+					notFoundErr.Error(),
+				)
+			}
+
+			requestBody.Subjects[i] = item
 		}
 
 		for i := 0; i < len(requestBody.Categories); i++ {
@@ -149,16 +169,6 @@ func creationControllerFactory(
 				GetItemById(requestBody.Categories[i].ID)
 
 			if findErr != nil {
-				return infra.CustomResponse(
-					context,
-					fiber.StatusInternalServerError,
-					false,
-					nil,
-					findErr.Error(),
-				)
-			}
-
-			if item.ID == 0 {
 				notFoundErr := errors.New(
 					fmt.Sprintf(
 						"Category at position %v not found",

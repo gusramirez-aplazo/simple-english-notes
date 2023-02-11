@@ -127,6 +127,10 @@ func (repo *Repository) UpdateOne(
 		return item, findErr
 	}
 
+	if item.Name == name {
+		return item, errors.New("nothing to update")
+	}
+
 	_, findByNameErr := repo.
 		GetItemByUniqueParam(name)
 
@@ -136,10 +140,9 @@ func (repo *Repository) UpdateOne(
 		return item, errors.New("the name you intend to update is already taken")
 	}
 
+	item.Name = name
 	getCurrentClientDB().
-		Model(&item).
-		Where("deleted_at=?", nil).
-		Update("name", name)
+		Save(&item)
 
 	return item, nil
 }

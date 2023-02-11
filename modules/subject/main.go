@@ -2,7 +2,7 @@ package subject
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/gusramirez-aplazo/simple-english-notes/modules/shared/entities"
+	"github.com/gusramirez-aplazo/simple-english-notes/modules/shared/domain"
 	"gorm.io/gorm"
 	"log"
 )
@@ -11,25 +11,27 @@ func Start(
 	clientDB *gorm.DB,
 	router fiber.Router,
 ) {
-	migrationErr := clientDB.AutoMigrate(entities.Subject{})
+	migrationErr := clientDB.AutoMigrate(domain.Subject{})
 
 	if migrationErr != nil {
 		log.Fatal(migrationErr)
 	}
 
-	const basePath = "/subject"
-
 	repo := GetRepository(clientDB)
 
-	router.Post(basePath, creationControllerFactory(repo))
+	controller := GetController(repo)
 
-	router.Get(basePath, getAllItemsControllerFactory(repo))
+	const basePath = "/subject"
 
-	router.Get(basePath+"/:subjectId", getItemByIdControllerFactory(repo))
+	router.Post(basePath, controller.createOne)
 
-	router.Get(basePath+"/name/:subjectName", getItemByNameControllerFactory(repo))
+	router.Get(basePath, controller.getAll)
 
-	router.Put(basePath+"/:subjectId", updateItemByIdControllerFactory(repo))
+	router.Get(basePath+"/name", controller.getOneByUniqueParam)
 
-	router.Delete(basePath+"/:subjectId", deleteItemByIdControllerFactory(repo))
+	router.Get(basePath+"/:subjectId", controller.getOneById)
+
+	router.Put(basePath+"/:subjectId", controller.updateOne)
+
+	router.Delete(basePath+"/:subjectId", controller.deleteOne)
 }

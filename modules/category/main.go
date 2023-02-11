@@ -47,5 +47,5 @@ func Start(
 
 	router.Put(basePath+"/:categoryId", controller.updateOne)
 
-	router.Delete(basePath+"/:categoryId", controller.DeleteOne)
+	router.Delete(basePath+"/:categoryId", controller.deleteOne)
 }

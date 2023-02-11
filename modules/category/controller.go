@@ -238,7 +238,7 @@ func (controller *Controller) getOneById(
 	)
 }
 
-func (controller *Controller) DeleteOne(
+func (controller *Controller) deleteOne(
 	context *fiber.Ctx,
 ) error {
 	id := context.Params("categoryId")
