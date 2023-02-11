@@ -1,4 +1,8 @@
 ## All Changes
+447970c85d324d62388ed49a138765e2d250671b refactor: within category module
+
+2f251a9ba0f401f54c7425a38becf5e9d66f6bdc docs: update changelog
+
 14b89392e2f8043ccb2c74c5e405fe87abd0c825 feat: add topic model,repository,controller,start
 
 b1108e39a2abe2f47c8a016bc0fd4c0fbef738eb docs: update changelog
