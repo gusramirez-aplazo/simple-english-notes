@@ -49,26 +49,26 @@ func (repo *Repository) GetItemById(
 func (repo *Repository) GetItemByUniqueParam(
 	name string,
 ) (domain.Category, error) {
-	resp := domain.Category{}
+	resp := &domain.Category{}
 
-	query := getCurrentClientDB().
+	getCurrentClientDB().
 		First(
-			&resp,
+			resp,
 			"name=?",
 			name,
 		)
 
-	if query.Error != nil {
-		return resp, query.Error
+	if resp.ID == 0 {
+		return *resp, errors.New("item not found")
 	}
 
-	return resp, nil
+	return *resp, nil
 }
 
 func (repo *Repository) CreateOne(
 	name string,
 ) (domain.Category, error) {
-	resp := domain.Category{
+	resp := &domain.Category{
 		Name: name,
 	}
 
@@ -76,10 +76,10 @@ func (repo *Repository) CreateOne(
 		Create(resp)
 
 	if query.Error != nil {
-		return resp, query.Error
+		return *resp, query.Error
 	}
 
-	return resp, nil
+	return *resp, nil
 }
 
 func (repo *Repository) GetAllItems() ([]domain.Category, error) {
@@ -117,26 +117,27 @@ func (repo *Repository) DeleteOne(
 func (repo *Repository) UpdateOne(
 	id uint,
 	name string,
-) (*domain.Category, error) {
-	var item *domain.Category
+) (domain.Category, error) {
+	item, findErr := repo.
+		GetItemById(id)
 
-	err := getCurrentClientDB().
-		First(
-			&item,
-			"id=?",
-			id,
-		).Error
+	itemNotFoundByIdErr := findErr != nil
 
-	if err != nil {
-		return item, err
+	if itemNotFoundByIdErr {
+		return item, findErr
 	}
 
-	if item.Name == "" {
-		return item, errors.New("item not found")
+	_, findByNameErr := repo.
+		GetItemByUniqueParam(name)
+
+	isItemFoundByName := findByNameErr == nil
+
+	if isItemFoundByName {
+		return item, errors.New("the name you intend to update is already taken")
 	}
 
 	getCurrentClientDB().
-		Model(item).
+		Model(&item).
 		Where("deleted_at=?", nil).
 		Update("name", name)
 

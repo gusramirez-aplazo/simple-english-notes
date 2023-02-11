@@ -41,9 +41,9 @@ func Start(
 
 	router.Get(basePath, controller.getAll)
 
-	router.Get(basePath+"/:categoryId", controller.getOneById)
+	router.Get(basePath+"/name", controller.getOneByUniqueParam)
 
-	router.Get(basePath+"/name/:categoryName", controller.getOneByUniqueParam)
+	router.Get(basePath+"/:categoryId", controller.getOneById)
 
 	router.Put(basePath+"/:categoryId", controller.updateOne)
 

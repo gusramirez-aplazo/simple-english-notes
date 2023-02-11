@@ -154,17 +154,25 @@ func creationControllerFactory(
 					fiber.StatusInternalServerError,
 					false,
 					nil,
-					findErr,
+					findErr.Error(),
 				)
 			}
 
 			if item.ID == 0 {
+				notFoundErr := errors.New(
+					fmt.Sprintf(
+						"Category at position %v not found",
+						i+1,
+					),
+				)
+
 				return infra.CustomResponse(
 					context,
 					fiber.StatusNotFound,
 					false,
 					nil,
-					errors.New(fmt.Sprintf("Category at position %v not found", i+1)))
+					notFoundErr.Error(),
+				)
 			}
 
 			requestBody.Categories[i] = item

@@ -33,16 +33,16 @@ func getRepo() *Repository {
 func (controller *Controller) getAll(
 	context *fiber.Ctx,
 ) error {
-	items, err := getRepo().
+	items, getAllErr := getRepo().
 		GetAllItems()
 
-	if err != nil {
+	if getAllErr != nil {
 		return infra.CustomResponse(
 			context,
 			fiber.StatusInternalServerError,
 			false,
 			nil,
-			err,
+			getAllErr.Error(),
 		)
 	}
 
@@ -52,7 +52,7 @@ func (controller *Controller) getAll(
 			fiber.StatusOK,
 			true,
 			[]fiber.Map{},
-			nil,
+			"",
 		)
 	}
 
@@ -61,7 +61,7 @@ func (controller *Controller) getAll(
 		fiber.StatusOK,
 		true,
 		items,
-		nil,
+		"",
 	)
 }
 
@@ -76,7 +76,7 @@ func (controller *Controller) createOne(
 			fiber.StatusBadRequest,
 			false,
 			nil,
-			err,
+			err.Error(),
 		)
 	}
 
@@ -84,37 +84,28 @@ func (controller *Controller) createOne(
 	requestBody.Name = strings.ToLower(requestBody.Name)
 
 	if len(requestBody.Name) == 0 {
+		emptyNameErr := errors.New("category name is empty")
 		return infra.CustomResponse(
 			context,
 			fiber.StatusBadRequest,
 			false,
 			nil,
-			errors.New("category name is empty"),
+			emptyNameErr.Error(),
 		)
 	}
 
-	item, findErr := getRepo().
+	_, findErr := getRepo().
 		GetItemByUniqueParam(requestBody.Name)
 
-	isItemFounded := item.ID != 0
+	isItemFounded := findErr == nil
 
-	if findErr != nil && isItemFounded {
+	if isItemFounded {
 		return infra.CustomResponse(
 			context,
-			fiber.StatusOK,
+			fiber.StatusBadRequest,
 			true,
-			item,
 			nil,
-		)
-	}
-
-	if findErr != nil && !isItemFounded {
-		return infra.CustomResponse(
-			context,
-			fiber.StatusInternalServerError,
-			false,
-			nil,
-			findErr,
+			"the category is already created",
 		)
 	}
 
@@ -127,7 +118,7 @@ func (controller *Controller) createOne(
 			fiber.StatusInternalServerError,
 			false,
 			nil,
-			createErr,
+			createErr.Error(),
 		)
 	}
 
@@ -136,40 +127,55 @@ func (controller *Controller) createOne(
 		fiber.StatusCreated,
 		true,
 		newItem,
-		nil,
+		"",
 	)
 }
 
 func (controller *Controller) getOneByUniqueParam(
 	context *fiber.Ctx,
 ) error {
-	name := context.Params("categoryName")
-
-	trimmedName := strings.TrimSpace(name)
-	lowerName := strings.ToLower(trimmedName)
-
-	if len(lowerName) == 0 {
-		return infra.CustomResponse(
-			context,
-			fiber.StatusBadRequest,
-			false,
-			nil,
-			errors.New("name is empty"),
-		)
+	type queryParams struct {
+		Name string `query:"name"`
 	}
 
-	item, findErr := getRepo().
-		GetItemByUniqueParam(name)
+	q := new(queryParams)
 
-	isItemFounded := item.ID != 0
-
-	if findErr != nil && !isItemFounded {
+	if err := context.QueryParser(q); err != nil {
 		return infra.CustomResponse(
 			context,
 			fiber.StatusInternalServerError,
 			false,
 			nil,
-			findErr,
+			err.Error(),
+		)
+	}
+
+	q.Name = strings.TrimSpace(q.Name)
+	q.Name = strings.ToLower(q.Name)
+
+	if len(q.Name) == 0 {
+		emptyNameErr := errors.New("name is empty")
+		return infra.CustomResponse(
+			context,
+			fiber.StatusBadRequest,
+			false,
+			nil,
+			emptyNameErr.Error(),
+		)
+	}
+
+	item, findErr := getRepo().
+		GetItemByUniqueParam(q.Name)
+
+	itemNotFound := findErr != nil
+
+	if itemNotFound {
+		return infra.CustomResponse(
+			context,
+			fiber.StatusNotFound,
+			false,
+			nil,
+			findErr.Error(),
 		)
 	}
 
@@ -178,7 +184,7 @@ func (controller *Controller) getOneByUniqueParam(
 		fiber.StatusOK,
 		true,
 		item,
-		nil,
+		"",
 	)
 }
 
@@ -195,7 +201,7 @@ func (controller *Controller) getOneById(
 			fiber.StatusBadRequest,
 			false,
 			nil,
-			parsedIdErr,
+			parsedIdErr.Error(),
 		)
 	}
 
@@ -205,20 +211,22 @@ func (controller *Controller) getOneById(
 	if findErr != nil {
 		return infra.CustomResponse(
 			context,
-			fiber.StatusInternalServerError,
+			fiber.StatusNotFound,
 			false,
 			nil,
-			findErr,
+			findErr.Error(),
 		)
 	}
 
 	if item.ID == 0 {
+		notFoundErr := errors.New("item not found")
 		return infra.CustomResponse(
 			context,
 			fiber.StatusNotFound,
 			false,
 			nil,
-			errors.New("item not found"))
+			notFoundErr.Error(),
+		)
 	}
 
 	return infra.CustomResponse(
@@ -226,7 +234,7 @@ func (controller *Controller) getOneById(
 		fiber.StatusOK,
 		true,
 		item,
-		nil,
+		"",
 	)
 }
 
@@ -243,7 +251,7 @@ func (controller *Controller) DeleteOne(
 			fiber.StatusBadRequest,
 			false,
 			nil,
-			parsedIdErr,
+			parsedIdErr.Error(),
 		)
 	}
 
@@ -256,22 +264,23 @@ func (controller *Controller) DeleteOne(
 			fiber.StatusBadRequest,
 			false,
 			nil,
-			deleteErr,
+			deleteErr.Error(),
 		)
 	}
 
 	if deletedItem.ID == 0 {
+		notFoundErr := errors.New(
+			fmt.Sprintf(
+				"item with ID <%v> not found",
+				parsedId,
+			),
+		)
 		return infra.CustomResponse(
 			context,
 			fiber.StatusNotFound,
 			false,
 			nil,
-			errors.New(
-				fmt.Sprintf(
-					"item with ID <%v> not found",
-					parsedId,
-				),
-			),
+			notFoundErr.Error(),
 		)
 	}
 
@@ -280,7 +289,7 @@ func (controller *Controller) DeleteOne(
 		fiber.StatusAccepted,
 		true,
 		deletedItem,
-		nil,
+		"",
 	)
 }
 
@@ -290,11 +299,13 @@ func (controller *Controller) updateOne(context *fiber.Ctx) error {
 	parsedId, parsedIdErr := infra.ParseID(id)
 
 	if parsedIdErr != nil {
-		return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"success": false,
-			"content": nil,
-			"error":   parsedIdErr.Error(),
-		})
+		return infra.CustomResponse(
+			context,
+			fiber.StatusBadRequest,
+			false,
+			nil,
+			parsedIdErr.Error(),
+		)
 	}
 
 	var proposedCategory *domain.Category
@@ -305,7 +316,7 @@ func (controller *Controller) updateOne(context *fiber.Ctx) error {
 			fiber.StatusInternalServerError,
 			false,
 			nil,
-			err,
+			err.Error(),
 		)
 	}
 
@@ -313,12 +324,15 @@ func (controller *Controller) updateOne(context *fiber.Ctx) error {
 	proposedCategory.Name = strings.ToLower(proposedCategory.Name)
 
 	if proposedCategory.Name == "" {
+		emptyErr := errors.New("name is empty")
+
 		return infra.CustomResponse(
 			context,
 			fiber.StatusBadRequest,
 			false,
 			nil,
-			errors.New("name is empty"))
+			emptyErr.Error(),
+		)
 	}
 
 	item, updateErr := getRepo().
@@ -327,10 +341,10 @@ func (controller *Controller) updateOne(context *fiber.Ctx) error {
 	if updateErr != nil {
 		return infra.CustomResponse(
 			context,
-			fiber.StatusNotFound,
+			fiber.StatusBadRequest,
 			false,
 			nil,
-			errors.New("item not found"),
+			updateErr.Error(),
 		)
 	}
 
@@ -339,6 +353,6 @@ func (controller *Controller) updateOne(context *fiber.Ctx) error {
 		fiber.StatusAccepted,
 		true,
 		item,
-		nil,
+		"",
 	)
 }
