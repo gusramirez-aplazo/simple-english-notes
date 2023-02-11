@@ -1,4 +1,8 @@
 ## All Changes
+fb45dc008e1c3f81030b773e06a30cf96e639aef fix:change response contract from error to message
+
+343fd0c5ce9e9a8456af9eed7e2b92ab44575589 docs: update changelog
+
 447970c85d324d62388ed49a138765e2d250671b refactor: within category module
 
 2f251a9ba0f401f54c7425a38becf5e9d66f6bdc docs: update changelog
