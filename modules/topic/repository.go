@@ -1,7 +1,8 @@
 package topic
 
 import (
-	"github.com/gusramirez-aplazo/simple-english-notes/modules/shared/entities"
+	"errors"
+	"github.com/gusramirez-aplazo/simple-english-notes/modules/shared/domain"
 	"gorm.io/gorm"
 )
 
@@ -27,50 +28,120 @@ func GetRepository(
 }
 
 func (repo *Repository) GetItemById(
-	topic *entities.Topic,
-) {
-	getCurrentClientDB().First(&topic, "topic_id=?", topic.TopicID)
-}
+	id uint,
+) (domain.Topic, error) {
+	item := &domain.Topic{}
 
-func (repo *Repository) GetItemByName(
-	topic *entities.Topic,
-) {
-	getCurrentClientDB().First(&topic, "name=?", topic.Name)
-}
+	getCurrentClientDB().
+		First(item,
+			"id",
+			id,
+		)
 
-func (repo *Repository) CreateItem(
-	topic *entities.Topic,
-) error {
-
-	dbCreationResult := getCurrentClientDB().Create(&topic)
-
-	if dbCreationResult.Error != nil {
-		return dbCreationResult.Error
+	if item.Name == "" {
+		return *item, errors.New("item not found")
 	}
 
-	return nil
+	return *item, nil
 }
 
-func (repo *Repository) GetAllItems(
-	notes *[]entities.Topic,
-) error {
-	findAllErr := getCurrentClientDB().Find(&notes)
+func (repo *Repository) GetItemByUniqueParam(
+	name string,
+) (domain.Topic, error) {
+	item := &domain.Topic{}
 
-	if findAllErr.Error != nil {
-		return findAllErr.Error
+	getCurrentClientDB().
+		First(
+			item,
+			"name=?",
+			name,
+		)
+
+	if item.ID == 0 {
+		return *item, errors.New("item not found")
 	}
 
-	return nil
+	return *item, nil
 }
 
-func (repo *Repository) DeleteItem(
-	topic *entities.Topic,
-) {
-	getCurrentClientDB().Delete(&topic)
+func (repo *Repository) CreateOne(
+	name string,
+) (domain.Topic, error) {
+	item := &domain.Topic{
+		Name: name,
+	}
+
+	query := getCurrentClientDB().
+		Create(item)
+
+	if query.Error != nil {
+		return *item, query.Error
+	}
+
+	return *item, nil
 }
 
-func (repo *Repository) UpdateItem(
-	topic *entities.Topic,
-) {
-	getCurrentClientDB().Save(&topic)
+func (repo *Repository) GetAllItems() ([]domain.Topic, error) {
+	var items []domain.Topic
+
+	query := getCurrentClientDB().
+		Find(&items)
+
+	if query.Error != nil {
+		return items, query.Error
+	}
+
+	return items, nil
+}
+
+func (repo *Repository) DeleteOne(
+	id uint,
+) (domain.Topic, error) {
+	item, err := repo.GetItemById(id)
+
+	if err != nil {
+		return item, err
+	}
+
+	query := getCurrentClientDB().
+		Delete(&item)
+
+	if query.Error != nil {
+		return item, query.Error
+	}
+
+	return item, nil
+}
+
+func (repo *Repository) UpdateOne(
+	id uint,
+	name string,
+) (domain.Topic, error) {
+	item, findErr := repo.
+		GetItemById(id)
+
+	itemNotFoundedErr := findErr != nil
+
+	if itemNotFoundedErr {
+		return item, findErr
+	}
+
+	if item.Name == name {
+		return item, errors.New("nothing to update")
+	}
+
+	_, findByNameErr := repo.
+		GetItemByUniqueParam(name)
+
+	isItemFoundByName := findByNameErr == nil
+
+	if isItemFoundByName {
+		return item, errors.New("the name you intend to update is already taken")
+	}
+
+	item.Name = name
+	getCurrentClientDB().
+		Save(&item)
+
+	return item, nil
 }

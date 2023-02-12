@@ -1,224 +1,295 @@
 package note
 
 import (
+	"errors"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gusramirez-aplazo/simple-english-notes/modules/shared/entities"
+	"github.com/gusramirez-aplazo/simple-english-notes/modules/shared/domain"
 	"github.com/gusramirez-aplazo/simple-english-notes/modules/shared/infra"
 	"strings"
 )
 
-func creationControllerFactory(
-	repository *Repository,
-) func(*fiber.Ctx) error {
-	return func(context *fiber.Ctx) error {
-		note := new(entities.Note)
-
-		if err := context.BodyParser(note); err != nil {
-			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"success": false,
-				"content": nil,
-				"error":   err.Error(),
-			})
-		}
-
-		note.Content = strings.TrimSpace(note.Content)
-		note.Cue = strings.TrimSpace(note.Cue)
-
-		if note.Content == "" {
-			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"success": false,
-				"content": nil,
-				"error":   "Content is required",
-			})
-		}
-
-		if err := repository.CreateItem(note); err != nil {
-			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"success": false,
-				"content": nil,
-				"error":   err.Error(),
-			})
-		}
-
-		return context.Status(fiber.StatusCreated).JSON(fiber.Map{
-			"success": true,
-			"content": note,
-			"error":   nil,
-		})
-
-	}
+type Controller struct {
+	repository *Repository
 }
 
-func getAllItemsControllerFactory(
-	repository *Repository,
-) func(*fiber.Ctx) error {
-	return func(context *fiber.Ctx) error {
-		var notes []entities.Note
+var singleController *Controller
 
-		if err := repository.GetAllItems(&notes); err != nil {
-			return context.Status(fiber.StatusInternalServerError).
-				JSON(fiber.Map{
-					"success": false,
-					"content": nil,
-					"error":   err.Error(),
-				})
+func GetController(
+	repo *Repository,
+) *Controller {
+	if singleController == nil {
+		singleController = &Controller{
+			repository: repo,
 		}
-
-		if len(notes) == 0 {
-			return context.Status(fiber.StatusOK).JSON(fiber.Map{
-				"success": true,
-				"content": []fiber.Map{},
-				"error":   nil,
-			})
-		}
-
-		return context.Status(fiber.StatusOK).JSON(fiber.Map{
-			"success": true,
-			"content": notes,
-			"error":   nil,
-		})
 	}
+
+	return singleController
 }
 
-func getItemByIdControllerFactory(
-	repository *Repository,
-) func(ctx *fiber.Ctx) error {
-	return func(context *fiber.Ctx) error {
-		id := context.Params("noteId")
-
-		parsedId, parsedIdErr := infra.ParseID(id)
-
-		if parsedIdErr != nil {
-			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"success": false,
-				"content": nil,
-				"error":   parsedIdErr.Error(),
-			})
-		}
-
-		var note = entities.Note{NoteID: parsedId}
-
-		repository.GetItem(&note)
-
-		if note.Content == "" {
-			return context.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"success": false,
-				"content": nil,
-				"error":   fmt.Sprintf("ID %v not found", id),
-			})
-		}
-
-		return context.Status(fiber.StatusOK).JSON(fiber.Map{
-			"success": true,
-			"content": note,
-			"error":   nil,
-		})
-	}
+func getRepo() *Repository {
+	return singleController.repository
 }
 
-func deleteItemByIdControllerFactory(
-	repository *Repository,
-) func(ctx *fiber.Ctx) error {
-	return func(context *fiber.Ctx) error {
-		id := context.Params("noteId")
+func (controller *Controller) getAll(
+	context *fiber.Ctx,
+) error {
+	items, getAllErr := getRepo().
+		GetAllItems()
 
-		parsedId, parsedIdErr := infra.ParseID(id)
-
-		if parsedIdErr != nil {
-			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"success": false,
-				"content": nil,
-				"error":   parsedIdErr.Error(),
-			})
-		}
-
-		var note = entities.Note{NoteID: parsedId}
-
-		repository.GetItem(&note)
-
-		if note.Content == "" {
-			return context.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"success": false,
-				"content": nil,
-				"error":   fmt.Sprintf("ID %v not found", id),
-			})
-		}
-
-		repository.DeleteItem(&note)
-
-		return context.Status(fiber.StatusAccepted).JSON(fiber.Map{
-			"success": true,
-			"content": note,
-			"error":   nil,
-		})
+	if getAllErr != nil {
+		return infra.CustomResponse(
+			context,
+			fiber.StatusInternalServerError,
+			false,
+			nil,
+			getAllErr.Error(),
+		)
 	}
+
+	if len(items) == 0 {
+		return infra.CustomResponse(
+			context,
+			fiber.StatusOK,
+			true,
+			[]fiber.Map{},
+			"",
+		)
+	}
+
+	return infra.CustomResponse(
+		context,
+		fiber.StatusOK,
+		true,
+		items,
+		"",
+	)
 }
 
-func updateItemByIdControllerFactory(
-	repository *Repository,
-) func(ctx *fiber.Ctx) error {
-	return func(context *fiber.Ctx) error {
-		id := context.Params("noteId")
+func (controller *Controller) createOne(
+	context *fiber.Ctx,
+) error {
+	requestBody := new(domain.Note)
 
-		parsedId, parsedIdErr := infra.ParseID(id)
-
-		if parsedIdErr != nil {
-			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"success": false,
-				"content": nil,
-				"error":   parsedIdErr.Error(),
-			})
-		}
-
-		var note = entities.Note{NoteID: parsedId}
-
-		repository.GetItem(&note)
-
-		if note.Content == "" {
-			return context.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"success": false,
-				"content": nil,
-				"error":   fmt.Sprintf("ID %v not found", id),
-			})
-		}
-
-		proposedItem := new(entities.Note)
-
-		if err := context.BodyParser(proposedItem); err != nil {
-			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"success": false,
-				"content": nil,
-				"error":   err.Error(),
-			})
-		}
-
-		proposedItem.Content = strings.TrimSpace(proposedItem.Content)
-		proposedItem.Cue = strings.TrimSpace(proposedItem.Cue)
-
-		if proposedItem.Content == "" {
-			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"success": false,
-				"content": nil,
-				"error":   "Content is required",
-			})
-		}
-
-		if note.Content != proposedItem.Content {
-			note.Content = proposedItem.Content
-		}
-
-		if note.Cue != proposedItem.Cue {
-			note.Cue = proposedItem.Cue
-		}
-
-		repository.UpdateItem(&note)
-
-		return context.Status(fiber.StatusOK).JSON(fiber.Map{
-			"success": true,
-			"content": note,
-			"error":   nil,
-		})
-
+	if err := context.BodyParser(requestBody); err != nil {
+		return infra.CustomResponse(
+			context,
+			fiber.StatusBadRequest,
+			false,
+			nil,
+			err.Error(),
+		)
 	}
+
+	requestBody.Content = strings.TrimSpace(requestBody.Content)
+	requestBody.Cue = strings.TrimSpace(requestBody.Cue)
+
+	if len(requestBody.Content) == 0 {
+		return infra.CustomResponse(
+			context,
+			fiber.StatusBadRequest,
+			false,
+			nil,
+			"note content is empty",
+		)
+	}
+
+	newItem, createErr := getRepo().
+		CreateOne(
+			requestBody.Content,
+			requestBody.Cue,
+		)
+
+	if createErr != nil {
+		return infra.CustomResponse(
+			context,
+			fiber.StatusInternalServerError,
+			false,
+			nil,
+			createErr.Error(),
+		)
+	}
+
+	return infra.CustomResponse(
+		context,
+		fiber.StatusCreated,
+		true,
+		newItem,
+		"",
+	)
+}
+
+func (controller *Controller) getOneById(
+	context *fiber.Ctx,
+) error {
+	id := context.Params("noteId")
+
+	parsedId, parsedIdErr := infra.ParseID(id)
+
+	if parsedIdErr != nil {
+		return infra.CustomResponse(
+			context,
+			fiber.StatusBadRequest,
+			false,
+			nil,
+			parsedIdErr.Error(),
+		)
+	}
+
+	item, findErr := getRepo().
+		GetItemById(parsedId)
+
+	if findErr != nil {
+		return infra.CustomResponse(
+			context,
+			fiber.StatusNotFound,
+			false,
+			nil,
+			findErr.Error(),
+		)
+	}
+
+	if item.ID == 0 {
+		notFoundErr := errors.New("item not found")
+		return infra.CustomResponse(
+			context,
+			fiber.StatusNotFound,
+			false,
+			nil,
+			notFoundErr.Error(),
+		)
+	}
+
+	return infra.CustomResponse(
+		context,
+		fiber.StatusOK,
+		true,
+		item,
+		"",
+	)
+}
+
+func (controller *Controller) deleteOne(
+	context *fiber.Ctx,
+) error {
+	id := context.Params("noteId")
+
+	parsedId, parsedIdErr := infra.ParseID(id)
+
+	if parsedIdErr != nil {
+		return infra.CustomResponse(
+			context,
+			fiber.StatusBadRequest,
+			false,
+			nil,
+			parsedIdErr.Error(),
+		)
+	}
+
+	deletedItem, deleteErr := getRepo().
+		DeleteOne(parsedId)
+
+	if deleteErr != nil {
+		return infra.CustomResponse(
+			context,
+			fiber.StatusBadRequest,
+			false,
+			nil,
+			deleteErr.Error(),
+		)
+	}
+
+	if deletedItem.ID == 0 {
+		notFoundErr := errors.New(
+			fmt.Sprintf(
+				"item with ID <%v> not found",
+				parsedId,
+			),
+		)
+		return infra.CustomResponse(
+			context,
+			fiber.StatusNotFound,
+			false,
+			nil,
+			notFoundErr.Error(),
+		)
+	}
+
+	return infra.CustomResponse(
+		context,
+		fiber.StatusAccepted,
+		true,
+		deletedItem,
+		"",
+	)
+}
+
+func (controller *Controller) updateOne(
+	context *fiber.Ctx,
+) error {
+	id := context.Params("noteId")
+
+	parsedId, parsedIdErr := infra.ParseID(id)
+
+	if parsedIdErr != nil {
+		return infra.CustomResponse(
+			context,
+			fiber.StatusBadRequest,
+			false,
+			nil,
+			parsedIdErr.Error(),
+		)
+	}
+
+	var proposedItem *domain.Note
+
+	if err := context.BodyParser(&proposedItem); err != nil {
+		return infra.CustomResponse(
+			context,
+			fiber.StatusInternalServerError,
+			false,
+			nil,
+			err.Error(),
+		)
+	}
+
+	proposedItem.Content = strings.TrimSpace(proposedItem.Content)
+	proposedItem.Cue = strings.TrimSpace(proposedItem.Cue)
+
+	if proposedItem.Content == "" {
+		emptyErr := errors.New("note content is empty")
+
+		return infra.CustomResponse(
+			context,
+			fiber.StatusBadRequest,
+			false,
+			nil,
+			emptyErr.Error(),
+		)
+	}
+
+	item, updateErr := getRepo().
+		UpdateOne(
+			parsedId,
+			proposedItem.Content,
+			proposedItem.Cue,
+		)
+
+	if updateErr != nil {
+		return infra.CustomResponse(
+			context,
+			fiber.StatusBadRequest,
+			false,
+			nil,
+			updateErr.Error(),
+		)
+	}
+
+	return infra.CustomResponse(
+		context,
+		fiber.StatusAccepted,
+		true,
+		item,
+		"",
+	)
 }

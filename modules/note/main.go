@@ -2,7 +2,7 @@ package note
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/gusramirez-aplazo/simple-english-notes/modules/shared/entities"
+	"github.com/gusramirez-aplazo/simple-english-notes/modules/shared/domain"
 	"gorm.io/gorm"
 	"log"
 )
@@ -11,24 +11,26 @@ func Start(
 	clientDB *gorm.DB,
 	router fiber.Router,
 ) {
-	migrationErr := clientDB.AutoMigrate(entities.Note{})
+	migrationErr := clientDB.AutoMigrate(domain.Note{})
 
 	if migrationErr != nil {
 		log.Fatal(migrationErr)
 	}
 
-	repo := GetRepository(clientDB)
-
 	const basePath = "/note"
 
-	router.Post(basePath, creationControllerFactory(repo))
+	repo := GetRepository(clientDB)
 
-	router.Get(basePath, getAllItemsControllerFactory(repo))
+	controller := GetController(repo)
 
-	router.Get(basePath+"/:noteId", getItemByIdControllerFactory(repo))
+	router.Post(basePath, controller.createOne)
 
-	router.Delete(basePath+"/:noteId", deleteItemByIdControllerFactory(repo))
+	router.Get(basePath, controller.getAll)
 
-	router.Put(basePath+"/:noteId", updateItemByIdControllerFactory(repo))
+	router.Get(basePath+"/:noteId", controller.getOneById)
+
+	router.Delete(basePath+"/:noteId", controller.deleteOne)
+
+	router.Put(basePath+"/:noteId", controller.updateOne)
 
 }

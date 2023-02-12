@@ -6,7 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gusramirez-aplazo/simple-english-notes/modules/category"
 	"github.com/gusramirez-aplazo/simple-english-notes/modules/note"
-	"github.com/gusramirez-aplazo/simple-english-notes/modules/shared/entities"
+	"github.com/gusramirez-aplazo/simple-english-notes/modules/shared/domain"
 	"github.com/gusramirez-aplazo/simple-english-notes/modules/shared/infra"
 	"github.com/gusramirez-aplazo/simple-english-notes/modules/subject"
 	"github.com/gusramirez-aplazo/simple-english-notes/modules/topic"
@@ -23,7 +23,7 @@ func creationControllerFactory(
 	noteRepo *note.Repository,
 ) func(*fiber.Ctx) error {
 	return func(context *fiber.Ctx) error {
-		requestBody := new(entities.CornellNote)
+		requestBody := new(domain.CornellNote)
 
 		if err := context.BodyParser(requestBody); err != nil {
 			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -37,63 +37,70 @@ func creationControllerFactory(
 		requestBody.Topic.Name = strings.ToLower(requestBody.Topic.Name)
 
 		if requestBody.Topic.Name == "" {
-			return context.Status(fiber.StatusBadRequest).
-				JSON(fiber.Map{
-					"success": false,
-					"content": nil,
-					"error":   "Topic is required",
-				})
+			return infra.CustomResponse(
+				context,
+				fiber.StatusBadRequest,
+				false,
+				nil,
+				"Topic is required",
+			)
 		}
 
-		topicRepo.GetItemByName(&requestBody.Topic)
+		_, findErr := topicRepo.GetItemByUniqueParam(requestBody.Topic.Name)
 
-		if requestBody.Topic.TopicID != 0 {
-			return context.Status(fiber.StatusBadRequest).
-				JSON(fiber.Map{
-					"success": false,
-					"content": nil,
-					"error":   "The requested topic name is already created, try to update it instead",
-				})
+		hasExistingItem := findErr == nil
+
+		if hasExistingItem {
+			return infra.CustomResponse(
+				context,
+				fiber.StatusBadRequest,
+				false,
+				nil,
+				"topic is already taken, try with another one")
 		}
 
 		if len(requestBody.Subjects) == 0 {
-			return context.Status(fiber.StatusBadRequest).
-				JSON(fiber.Map{
-					"success": false,
-					"content": nil,
-					"error":   "Add at least 1 subject",
-				})
+			return infra.CustomResponse(
+				context,
+				fiber.StatusBadRequest,
+				false,
+				nil,
+				"Add at least 1 subject",
+			)
 		}
 
 		if len(requestBody.Categories) == 0 {
-			return context.Status(fiber.StatusBadRequest).
-				JSON(fiber.Map{
-					"success": false,
-					"content": nil,
-					"error":   "Add at least 1 category",
-				})
+			return infra.CustomResponse(
+				context,
+				fiber.StatusBadRequest,
+				false,
+				nil,
+				"Add at least 1 category",
+			)
 		}
 
 		if len(requestBody.Notes) == 0 {
-			return context.Status(fiber.StatusBadRequest).
-				JSON(fiber.Map{
-					"success": false,
-					"content": nil,
-					"error":   "Add at least 1 note",
-				})
+			return infra.CustomResponse(
+				context,
+				fiber.StatusBadRequest,
+				false,
+				nil,
+				"Add at least 1 note",
+			)
 		}
 
 		for i := 0; i < len(requestBody.Subjects); i++ {
 			if requestBody.Subjects[i].ID == 0 {
-				return context.Status(fiber.StatusBadRequest).
-					JSON(fiber.Map{
-						"success": false,
-						"content": nil,
-						"error": fmt.Sprintf(
-							"Subject %v does not have ID",
-							requestBody.Subjects[i].Name,
-						),
-					})
+				return infra.CustomResponse(
+					context,
+					fiber.StatusBadRequest,
+					false,
+					nil,
+					fmt.Sprintf(
+						"Subject %v does not have ID",
+						requestBody.Subjects[i].Name,
+					),
+				)
 			}
 
 			requestBody.Subjects[i].Name = strings.TrimSpace(
@@ -105,12 +112,16 @@ func creationControllerFactory(
 			)
 
 			if len(requestBody.Subjects[i].Name) == 0 {
-				return context.Status(fiber.StatusBadRequest).
-					JSON(fiber.Map{
-						"success": false,
-						"content": nil,
-						"error":   fmt.Sprintf("Subject in position %v has an empty Name", i+1),
-					})
+				return infra.CustomResponse(
+					context,
+					fiber.StatusBadRequest,
+					false,
+					nil,
+					fmt.Sprintf(
+						"Subject in position %v has an empty Name",
+						i+1,
+					),
+				)
 			}
 
 			item, findErr := subjectRepo.
@@ -138,31 +149,36 @@ func creationControllerFactory(
 
 		for i := 0; i < len(requestBody.Categories); i++ {
 			if requestBody.Categories[i].ID == 0 {
-				return context.Status(fiber.StatusBadRequest).
-					JSON(fiber.Map{
-						"success": false,
-						"content": nil,
-						"error": fmt.Sprintf(
-							"Category %v does not have ID",
-							requestBody.Categories[i].Name,
-						),
-					})
+				return infra.CustomResponse(
+					context,
+					fiber.StatusBadRequest,
+					false,
+					nil,
+					fmt.Sprintf(
+						"Category %v does not have ID",
+						requestBody.Categories[i].Name,
+					),
+				)
 			}
+
 			requestBody.Categories[i].Name = strings.TrimSpace(
 				requestBody.Categories[i].Name,
 			)
-
 			requestBody.Categories[i].Name = strings.ToLower(
 				requestBody.Categories[i].Name,
 			)
 
 			if len(requestBody.Categories[i].Name) == 0 {
-				return context.Status(fiber.StatusBadRequest).
-					JSON(fiber.Map{
-						"success": false,
-						"content": nil,
-						"error":   fmt.Sprintf("Category in position %v has an empty Name", i+1),
-					})
+				return infra.CustomResponse(
+					context,
+					fiber.StatusBadRequest,
+					false,
+					nil,
+					fmt.Sprintf(
+						"Category in position %v has an empty Name",
+						i+1,
+					),
+				)
 			}
 
 			item, findErr := categoryRepo.
@@ -189,42 +205,63 @@ func creationControllerFactory(
 		}
 
 		for i := 0; i < len(requestBody.Notes); i++ {
-			if requestBody.Notes[i].NoteID == 0 {
-				return context.Status(fiber.StatusBadRequest).
-					JSON(fiber.Map{
-						"success": false,
-						"content": nil,
-						"error": fmt.Sprintf(
-							"Note at position %v does not have ID",
-							i+1,
-						),
-					})
+			if requestBody.Notes[i].ID == 0 {
+				return infra.CustomResponse(
+					context,
+					fiber.StatusBadRequest,
+					false,
+					nil,
+					fmt.Sprintf(
+						"Note at position %v does not have ID",
+						i+1,
+					),
+				)
 			}
 
 			requestBody.Notes[i].Content = strings.TrimSpace(
 				requestBody.Notes[i].Content,
 			)
-
 			requestBody.Notes[i].Cue = strings.TrimSpace(
 				requestBody.Notes[i].Cue,
 			)
 
 			if len(requestBody.Notes[i].Content) == 0 {
-				return context.Status(fiber.StatusBadRequest).
-					JSON(fiber.Map{
-						"success": false,
-						"content": nil,
-						"error": fmt.Sprintf(
-							"Note content at position %v is empty",
-							i+1,
-						),
-					})
+				return infra.CustomResponse(
+					context,
+					fiber.StatusBadRequest,
+					false,
+					nil,
+					fmt.Sprintf(
+						"Note content at position %v is empty",
+						i+1,
+					),
+				)
 			}
 
-			noteRepo.GetItem(&requestBody.Notes[i])
+			item, findErr := noteRepo.
+				GetItemById(requestBody.Notes[i].ID)
+
+			if findErr != nil {
+				notFoundErr := errors.New(
+					fmt.Sprintf(
+						"Note at position %v not found",
+						i+1,
+					),
+				)
+
+				return infra.CustomResponse(
+					context,
+					fiber.StatusNotFound,
+					false,
+					nil,
+					notFoundErr.Error(),
+				)
+			}
+
+			requestBody.Notes[i] = item
 		}
 
-		cornellNote := entities.CornellNote{
+		cornellNote := domain.CornellNote{
 			Topic:      requestBody.Topic,
 			Subjects:   requestBody.Subjects,
 			Categories: requestBody.Categories,
@@ -237,18 +274,22 @@ func creationControllerFactory(
 			)
 
 		if dbCreationResponse.Error != nil {
-			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"success": false,
-				"content": nil,
-				"error":   dbCreationResponse.Error.Error(),
-			})
+			return infra.CustomResponse(
+				context,
+				fiber.StatusBadRequest,
+				false,
+				nil,
+				dbCreationResponse.Error.Error(),
+			)
 		}
 
-		return context.Status(fiber.StatusCreated).JSON(fiber.Map{
-			"success": true,
-			"content": cornellNote,
-			"error":   nil,
-		})
+		return infra.CustomResponse(
+			context,
+			fiber.StatusCreated,
+			true,
+			cornellNote,
+			"",
+		)
 	}
 }
 
@@ -256,16 +297,18 @@ func getAllCornellNoteControllerFactory(
 	clientDB *gorm.DB,
 ) func(*fiber.Ctx) error {
 	return func(context *fiber.Ctx) error {
-		var cornellNotes []entities.CornellNote
+		var cornellNotes []domain.CornellNote
 
 		clientDB.
 			Preload(clause.Associations).
 			Find(&cornellNotes)
 
-		return context.Status(fiber.StatusOK).JSON(fiber.Map{
-			"success": true,
-			"content": cornellNotes,
-			"error":   nil,
-		})
+		return infra.CustomResponse(
+			context,
+			fiber.StatusOK,
+			true,
+			cornellNotes,
+			"",
+		)
 	}
 }

@@ -1,230 +1,360 @@
 package topic
 
 import (
+	"errors"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gusramirez-aplazo/simple-english-notes/modules/shared/entities"
+	"github.com/gusramirez-aplazo/simple-english-notes/modules/shared/domain"
 	"github.com/gusramirez-aplazo/simple-english-notes/modules/shared/infra"
 	"strings"
 )
 
-func creationControllerFactory(
-	repository *Repository,
-) func(*fiber.Ctx) error {
-	return func(context *fiber.Ctx) error {
-		topic := new(entities.Topic)
-
-		if err := context.BodyParser(topic); err != nil {
-			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"success": false,
-				"content": nil,
-				"error":   err.Error(),
-			})
-		}
-
-		topic.Name = strings.TrimSpace(topic.Name)
-		topic.Name = strings.ToLower(topic.Name)
-
-		if topic.Name == "" {
-			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"success": false,
-				"content": nil,
-				"error":   "Topic name is required",
-			})
-		}
-
-		repository.GetItemByName(topic)
-
-		if topic.TopicID != 0 {
-			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"success": false,
-				"content": nil,
-				"error":   "Topic already created",
-			})
-		}
-
-		if err := repository.CreateItem(topic); err != nil {
-			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"success": false,
-				"content": nil,
-				"error":   err.Error(),
-			})
-		}
-
-		return context.Status(fiber.StatusCreated).JSON(fiber.Map{
-			"success": true,
-			"content": topic,
-			"error":   nil,
-		})
-
-	}
+type Controller struct {
+	repository *Repository
 }
 
-func getAllItemsControllerFactory(
-	repository *Repository,
-) func(*fiber.Ctx) error {
-	return func(context *fiber.Ctx) error {
-		var topics []entities.Topic
+var singleController *Controller
 
-		if err := repository.GetAllItems(&topics); err != nil {
-			return context.Status(fiber.StatusInternalServerError).
-				JSON(fiber.Map{
-					"success": false,
-					"content": nil,
-					"error":   err.Error(),
-				})
+func GetController(
+	repo *Repository,
+) *Controller {
+	if singleController == nil {
+		singleController = &Controller{
+			repository: repo,
 		}
-
-		if len(topics) == 0 {
-			return context.Status(fiber.StatusOK).JSON(fiber.Map{
-				"success": true,
-				"content": []fiber.Map{},
-				"error":   nil,
-			})
-		}
-
-		return context.Status(fiber.StatusOK).JSON(fiber.Map{
-			"success": true,
-			"content": topics,
-			"error":   nil,
-		})
 	}
+
+	return singleController
 }
 
-func getItemByIdControllerFactory(
-	repository *Repository,
-) func(ctx *fiber.Ctx) error {
-	return func(context *fiber.Ctx) error {
-		id := context.Params("topicId")
-
-		parsedId, parsedIdErr := infra.ParseID(id)
-
-		if parsedIdErr != nil {
-			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"success": false,
-				"content": nil,
-				"error":   parsedIdErr.Error(),
-			})
-		}
-
-		var topic = entities.Topic{TopicID: parsedId}
-
-		repository.GetItemById(&topic)
-
-		if topic.Name == "" {
-			return context.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"success": false,
-				"content": nil,
-				"error":   fmt.Sprintf("ID %v not found", id),
-			})
-		}
-
-		return context.Status(fiber.StatusOK).JSON(fiber.Map{
-			"success": true,
-			"content": topic,
-			"error":   nil,
-		})
-	}
+func getRepo() *Repository {
+	return singleController.repository
 }
 
-func deleteItemByIdControllerFactory(
-	repository *Repository,
-) func(ctx *fiber.Ctx) error {
-	return func(context *fiber.Ctx) error {
-		id := context.Params("topicId")
+func (controller *Controller) getAll(
+	context *fiber.Ctx,
+) error {
+	items, getAllErr := getRepo().
+		GetAllItems()
 
-		parsedId, parsedIdErr := infra.ParseID(id)
-
-		if parsedIdErr != nil {
-			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"success": false,
-				"content": nil,
-				"error":   parsedIdErr.Error(),
-			})
-		}
-
-		var topic = entities.Topic{TopicID: parsedId}
-
-		repository.GetItemById(&topic)
-
-		if topic.Name == "" {
-			return context.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"success": false,
-				"content": nil,
-				"error":   fmt.Sprintf("ID %v not found", id),
-			})
-		}
-
-		repository.DeleteItem(&topic)
-
-		return context.Status(fiber.StatusAccepted).JSON(fiber.Map{
-			"success": true,
-			"content": topic,
-			"error":   nil,
-		})
+	if getAllErr != nil {
+		return infra.CustomResponse(
+			context,
+			fiber.StatusInternalServerError,
+			false,
+			nil,
+			getAllErr.Error(),
+		)
 	}
+
+	if len(items) == 0 {
+		return infra.CustomResponse(
+			context,
+			fiber.StatusOK,
+			true,
+			[]fiber.Map{},
+			"",
+		)
+	}
+
+	return infra.CustomResponse(
+		context,
+		fiber.StatusOK,
+		true,
+		items,
+		"",
+	)
 }
 
-func updateItemByIdControllerFactory(
-	repository *Repository,
-) func(ctx *fiber.Ctx) error {
-	return func(context *fiber.Ctx) error {
-		id := context.Params("topicId")
+func (controller *Controller) createOne(
+	context *fiber.Ctx,
+) error {
+	requestBody := new(domain.Topic)
 
-		parsedId, parsedIdErr := infra.ParseID(id)
-
-		if parsedIdErr != nil {
-			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"success": false,
-				"content": nil,
-				"error":   parsedIdErr.Error(),
-			})
-		}
-
-		var topic = entities.Topic{TopicID: parsedId}
-
-		repository.GetItemById(&topic)
-
-		if topic.Name == "" {
-			return context.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"success": false,
-				"content": nil,
-				"error":   fmt.Sprintf("ID %v not found", id),
-			})
-		}
-
-		proposedItem := new(entities.Topic)
-
-		if err := context.BodyParser(proposedItem); err != nil {
-			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"success": false,
-				"content": nil,
-				"error":   err.Error(),
-			})
-		}
-
-		topic.Name = strings.TrimSpace(topic.Name)
-		topic.Name = strings.ToLower(topic.Name)
-
-		if proposedItem.Name == "" {
-			return context.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"success": false,
-				"content": nil,
-				"error":   "Topic name is required",
-			})
-		}
-
-		if topic.Name != proposedItem.Name {
-			topic.Name = proposedItem.Name
-		}
-
-		repository.UpdateItem(&topic)
-
-		return context.Status(fiber.StatusOK).JSON(fiber.Map{
-			"success": true,
-			"content": topic,
-			"error":   nil,
-		})
-
+	if err := context.BodyParser(requestBody); err != nil {
+		return infra.CustomResponse(
+			context,
+			fiber.StatusBadRequest,
+			false,
+			nil,
+			err.Error(),
+		)
 	}
+
+	requestBody.Name = strings.TrimSpace(requestBody.Name)
+	requestBody.Name = strings.ToLower(requestBody.Name)
+
+	if len(requestBody.Name) == 0 {
+		return infra.CustomResponse(
+			context,
+			fiber.StatusBadRequest,
+			false,
+			nil,
+			"topic name is empty",
+		)
+	}
+
+	_, findErr := getRepo().
+		GetItemByUniqueParam(requestBody.Name)
+
+	isItemFounded := findErr == nil
+
+	if isItemFounded {
+		return infra.CustomResponse(
+			context,
+			fiber.StatusBadRequest,
+			true,
+			nil,
+			"topic is already created",
+		)
+	}
+
+	newItem, createErr := getRepo().
+		CreateOne(requestBody.Name)
+
+	if createErr != nil {
+		return infra.CustomResponse(
+			context,
+			fiber.StatusInternalServerError,
+			false,
+			nil,
+			createErr.Error(),
+		)
+	}
+
+	return infra.CustomResponse(
+		context,
+		fiber.StatusCreated,
+		true,
+		newItem,
+		"",
+	)
+}
+
+func (controller *Controller) getOneByUniqueParam(
+	context *fiber.Ctx,
+) error {
+	type queryParams struct {
+		Name string `query:"name"`
+	}
+
+	q := new(queryParams)
+
+	if err := context.QueryParser(q); err != nil {
+		return infra.CustomResponse(
+			context,
+			fiber.StatusInternalServerError,
+			false,
+			nil,
+			err.Error(),
+		)
+	}
+
+	q.Name = strings.TrimSpace(q.Name)
+	q.Name = strings.ToLower(q.Name)
+
+	if len(q.Name) == 0 {
+		emptyNameErr := errors.New("name is empty")
+		return infra.CustomResponse(
+			context,
+			fiber.StatusBadRequest,
+			false,
+			nil,
+			emptyNameErr.Error(),
+		)
+	}
+
+	item, findErr := getRepo().
+		GetItemByUniqueParam(q.Name)
+
+	itemNotFound := findErr != nil
+
+	if itemNotFound {
+		return infra.CustomResponse(
+			context,
+			fiber.StatusNotFound,
+			false,
+			nil,
+			findErr.Error(),
+		)
+	}
+
+	return infra.CustomResponse(
+		context,
+		fiber.StatusOK,
+		true,
+		item,
+		"",
+	)
+}
+
+func (controller *Controller) getOneById(
+	context *fiber.Ctx,
+) error {
+	id := context.Params("topicId")
+
+	parsedId, parsedIdErr := infra.ParseID(id)
+
+	if parsedIdErr != nil {
+		return infra.CustomResponse(
+			context,
+			fiber.StatusBadRequest,
+			false,
+			nil,
+			parsedIdErr.Error(),
+		)
+	}
+
+	item, findErr := getRepo().
+		GetItemById(parsedId)
+
+	if findErr != nil {
+		return infra.CustomResponse(
+			context,
+			fiber.StatusNotFound,
+			false,
+			nil,
+			findErr.Error(),
+		)
+	}
+
+	if item.ID == 0 {
+		notFoundErr := errors.New("item not found")
+		return infra.CustomResponse(
+			context,
+			fiber.StatusNotFound,
+			false,
+			nil,
+			notFoundErr.Error(),
+		)
+	}
+
+	return infra.CustomResponse(
+		context,
+		fiber.StatusOK,
+		true,
+		item,
+		"",
+	)
+}
+
+func (controller *Controller) deleteOne(
+	context *fiber.Ctx,
+) error {
+	id := context.Params("topicId")
+
+	parsedId, parsedIdErr := infra.ParseID(id)
+
+	if parsedIdErr != nil {
+		return infra.CustomResponse(
+			context,
+			fiber.StatusBadRequest,
+			false,
+			nil,
+			parsedIdErr.Error(),
+		)
+	}
+
+	deletedItem, deleteErr := getRepo().
+		DeleteOne(parsedId)
+
+	if deleteErr != nil {
+		return infra.CustomResponse(
+			context,
+			fiber.StatusBadRequest,
+			false,
+			nil,
+			deleteErr.Error(),
+		)
+	}
+
+	if deletedItem.ID == 0 {
+		notFoundErr := errors.New(
+			fmt.Sprintf(
+				"item with ID <%v> not found",
+				parsedId,
+			),
+		)
+		return infra.CustomResponse(
+			context,
+			fiber.StatusNotFound,
+			false,
+			nil,
+			notFoundErr.Error(),
+		)
+	}
+
+	return infra.CustomResponse(
+		context,
+		fiber.StatusAccepted,
+		true,
+		deletedItem,
+		"",
+	)
+}
+
+func (controller *Controller) updateOne(
+	context *fiber.Ctx,
+) error {
+	id := context.Params("topicId")
+
+	parsedId, parsedIdErr := infra.ParseID(id)
+
+	if parsedIdErr != nil {
+		return infra.CustomResponse(
+			context,
+			fiber.StatusBadRequest,
+			false,
+			nil,
+			parsedIdErr.Error(),
+		)
+	}
+
+	var proposedItem *domain.Topic
+
+	if err := context.BodyParser(&proposedItem); err != nil {
+		return infra.CustomResponse(
+			context,
+			fiber.StatusInternalServerError,
+			false,
+			nil,
+			err.Error(),
+		)
+	}
+
+	proposedItem.Name = strings.TrimSpace(proposedItem.Name)
+	proposedItem.Name = strings.ToLower(proposedItem.Name)
+
+	if proposedItem.Name == "" {
+		emptyErr := errors.New("name is empty")
+
+		return infra.CustomResponse(
+			context,
+			fiber.StatusBadRequest,
+			false,
+			nil,
+			emptyErr.Error(),
+		)
+	}
+
+	item, updateErr := getRepo().
+		UpdateOne(parsedId, proposedItem.Name)
+
+	if updateErr != nil {
+		return infra.CustomResponse(
+			context,
+			fiber.StatusBadRequest,
+			false,
+			nil,
+			updateErr.Error(),
+		)
+	}
+
+	return infra.CustomResponse(
+		context,
+		fiber.StatusAccepted,
+		true,
+		item,
+		"",
+	)
 }

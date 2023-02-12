@@ -2,7 +2,7 @@ package topic
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/gusramirez-aplazo/simple-english-notes/modules/shared/entities"
+	"github.com/gusramirez-aplazo/simple-english-notes/modules/shared/domain"
 	"gorm.io/gorm"
 	"log"
 )
@@ -11,24 +11,27 @@ func Start(
 	clientDB *gorm.DB,
 	router fiber.Router,
 ) {
-
-	migrationErr := clientDB.AutoMigrate(entities.Topic{})
+	migrationErr := clientDB.AutoMigrate(domain.Topic{})
 
 	if migrationErr != nil {
 		log.Fatal(migrationErr)
 	}
 
-	repo := GetRepository(clientDB)
-
 	const basePath = "/topic"
 
-	router.Post(basePath, creationControllerFactory(repo))
+	repo := GetRepository(clientDB)
 
-	router.Get(basePath, getAllItemsControllerFactory(repo))
+	controller := GetController(repo)
 
-	router.Get(basePath+"/:topicId", getItemByIdControllerFactory(repo))
+	router.Post(basePath, controller.createOne)
 
-	router.Delete(basePath+"/:topicId", deleteItemByIdControllerFactory(repo))
+	router.Get(basePath, controller.getAll)
 
-	router.Put(basePath+"/:topicId", updateItemByIdControllerFactory(repo))
+	router.Get(basePath+"/name", controller.getOneByUniqueParam)
+
+	router.Get(basePath+"/:topicId", controller.getOneById)
+
+	router.Delete(basePath+"/:topicId", controller.deleteOne)
+
+	router.Put(basePath+"/:topicId", controller.updateOne)
 }

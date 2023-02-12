@@ -1,7 +1,8 @@
 package note
 
 import (
-	"github.com/gusramirez-aplazo/simple-english-notes/modules/shared/entities"
+	"errors"
+	"github.com/gusramirez-aplazo/simple-english-notes/modules/shared/domain"
 	"gorm.io/gorm"
 )
 
@@ -26,45 +27,97 @@ func GetRepository(
 	return repository
 }
 
-func (repo *Repository) GetItem(
-	note *entities.Note,
-) {
-	getCurrentClientDB().First(&note)
-}
+func (repo *Repository) GetItemById(
+	id uint,
+) (domain.Note, error) {
+	item := &domain.Note{}
 
-func (repo *Repository) CreateItem(
-	note *entities.Note,
-) error {
+	getCurrentClientDB().
+		First(item,
+			"id",
+			id,
+		)
 
-	dbCreationResult := getCurrentClientDB().Create(&note)
-
-	if dbCreationResult.Error != nil {
-		return dbCreationResult.Error
+	if item.Content == "" {
+		return *item, errors.New("item not found")
 	}
 
-	return nil
+	return *item, nil
 }
 
-func (repo *Repository) GetAllItems(
-	notes *[]entities.Note,
-) error {
-	findAllErr := getCurrentClientDB().Find(&notes)
-
-	if findAllErr.Error != nil {
-		return findAllErr.Error
+func (repo *Repository) CreateOne(
+	content string,
+	cue string,
+) (domain.Note, error) {
+	item := &domain.Note{
+		Cue:     cue,
+		Content: content,
 	}
 
-	return nil
+	query := getCurrentClientDB().
+		Create(item)
+
+	if query.Error != nil {
+		return *item, query.Error
+	}
+
+	return *item, nil
 }
 
-func (repo *Repository) DeleteItem(
-	note *entities.Note,
-) {
-	getCurrentClientDB().Delete(&note)
+func (repo *Repository) GetAllItems() ([]domain.Note, error) {
+	var items []domain.Note
+
+	query := getCurrentClientDB().
+		Find(&items)
+
+	if query.Error != nil {
+		return items, query.Error
+	}
+
+	return items, nil
 }
 
-func (repo *Repository) UpdateItem(
-	note *entities.Note,
-) {
-	getCurrentClientDB().Save(&note)
+func (repo *Repository) DeleteOne(
+	id uint,
+) (domain.Note, error) {
+	item, err := repo.GetItemById(id)
+
+	if err != nil {
+		return item, err
+	}
+
+	query := getCurrentClientDB().
+		Delete(&item)
+
+	if query.Error != nil {
+		return item, query.Error
+	}
+
+	return item, nil
+}
+
+func (repo *Repository) UpdateOne(
+	id uint,
+	content string,
+	cue string,
+) (domain.Note, error) {
+	item, findErr := repo.
+		GetItemById(id)
+
+	itemNotFoundedErr := findErr != nil
+
+	if itemNotFoundedErr {
+		return item, findErr
+	}
+
+	if item.Content == content && item.Cue == cue {
+		return item, errors.New("nothing to update")
+	}
+
+	item.Content = content
+	item.Cue = cue
+	getCurrentClientDB().
+		Save(&item)
+
+	return item, nil
 }

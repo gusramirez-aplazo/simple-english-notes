@@ -102,7 +102,7 @@ func (repo *Repository) DeleteOne(
 	}
 
 	query := getCurrentClientDB().
-		Delete(item)
+		Delete(&item)
 
 	if query.Error != nil {
 		return item, query.Error

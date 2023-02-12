@@ -17,11 +17,11 @@ func Start(
 		log.Fatal(migrationErr)
 	}
 
+	const basePath = "/subject"
+
 	repo := GetRepository(clientDB)
 
 	controller := GetController(repo)
-
-	const basePath = "/subject"
 
 	router.Post(basePath, controller.createOne)
 

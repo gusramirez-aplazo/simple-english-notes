@@ -4,7 +4,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gusramirez-aplazo/simple-english-notes/modules/category"
 	"github.com/gusramirez-aplazo/simple-english-notes/modules/note"
-	"github.com/gusramirez-aplazo/simple-english-notes/modules/shared/entities"
+	"github.com/gusramirez-aplazo/simple-english-notes/modules/shared/domain"
 	"github.com/gusramirez-aplazo/simple-english-notes/modules/subject"
 	"github.com/gusramirez-aplazo/simple-english-notes/modules/topic"
 	"gorm.io/gorm"
@@ -15,7 +15,7 @@ func Start(
 	clientDB *gorm.DB,
 	router fiber.Router,
 ) {
-	migrationErr := clientDB.AutoMigrate(entities.CornellNote{})
+	migrationErr := clientDB.AutoMigrate(domain.CornellNote{})
 
 	if migrationErr != nil {
 		log.Fatal(migrationErr)
