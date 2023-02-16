@@ -103,7 +103,7 @@ func (controller *Controller) createOne(
 		return infra.CustomResponse(
 			context,
 			fiber.StatusBadRequest,
-			true,
+			false,
 			nil,
 			"the category is already created",
 		)
