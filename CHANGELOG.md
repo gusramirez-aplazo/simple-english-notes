@@ -1,4 +1,8 @@
 ## All Changes
+e088f2e7aac1f2879772f11dfc9ad92ce5e3bd6b fix: category already created status
+
+bfe97b285028c50201f494eac8938d5be9c70e18 docs: update changelog
+
 bad77633be54069f4d2aa4c85dd86fa7609b7fb6 refactor: set a common structure for files
 
 08a2e303f60ff5793908acae030098dfc53400cd docs: update changelog
