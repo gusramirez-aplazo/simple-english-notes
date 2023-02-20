@@ -1,4 +1,8 @@
 ## All Changes
+6b461f7cce366f35efd2fcfea9e321c2f5f96f23 fix: create one subject method
+
+b5a853f2cd172a0c3d669e22607ca967c5e9fe25 docs: update changelog
+
 e088f2e7aac1f2879772f11dfc9ad92ce5e3bd6b fix: category already created status
 
 bfe97b285028c50201f494eac8938d5be9c70e18 docs: update changelog
