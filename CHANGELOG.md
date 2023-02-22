@@ -1,4 +1,8 @@
 ## All Changes
+154f9029de631905b2f419c19edd810db51dff8d feat: add cors middleware
+
+856106fddeb607820aea187c65e16175bc3cdcac docs: update changelog
+
 6b461f7cce366f35efd2fcfea9e321c2f5f96f23 fix: create one subject method
 
 b5a853f2cd172a0c3d669e22607ca967c5e9fe25 docs: update changelog
