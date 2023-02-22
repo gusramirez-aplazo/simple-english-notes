@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gusramirez-aplazo/simple-english-notes/modules/category"
 	"github.com/gusramirez-aplazo/simple-english-notes/modules/cornell-note"
 	"github.com/gusramirez-aplazo/simple-english-notes/modules/database"
@@ -26,6 +27,8 @@ func main() {
 	}
 
 	app := fiber.New(fiberConfig)
+
+	app.Use(cors.New())
 
 	app.Get("/", func(context *fiber.Ctx) error {
 		return context.JSON(&fiber.Map{
