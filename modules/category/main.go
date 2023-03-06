@@ -7,20 +7,6 @@ import (
 	"log"
 )
 
-//type CategoryContainer struct {
-//	repo *domain.BaseRepository
-//	cont *domain.BaseController
-//	db   *gorm.DB
-//}
-//
-//func (category *CategoryContainer) Init(
-//	repository *domain.BaseRepository,
-//	controller *domain.BaseController,
-//	clientDB *gorm.DB,
-//) {
-//
-//}
-
 func Start(
 	clientDB *gorm.DB,
 	router fiber.Router,

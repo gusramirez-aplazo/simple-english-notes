@@ -2,7 +2,6 @@ package cornellNote
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/gusramirez-aplazo/simple-english-notes/modules/category"
 	"github.com/gusramirez-aplazo/simple-english-notes/modules/note"
 	"github.com/gusramirez-aplazo/simple-english-notes/modules/shared/domain"
 	"github.com/gusramirez-aplazo/simple-english-notes/modules/subject"
@@ -15,21 +14,28 @@ func Start(
 	clientDB *gorm.DB,
 	router fiber.Router,
 ) {
+	err := clientDB.SetupJoinTable(&domain.CornellNote{}, "Subjects", &domain.CornellSubjects{})
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	migrationErr := clientDB.AutoMigrate(domain.CornellNote{})
 
 	if migrationErr != nil {
 		log.Fatal(migrationErr)
 	}
 
+	repo := GetRepository(clientDB)
+	topicRepo := topic.GetRepository(clientDB)
+	subjectRepo := subject.GetRepository(clientDB)
+	noteRepo := note.GetRepository(clientDB)
+	controller := GetController(repo, topicRepo, subjectRepo, noteRepo)
+
 	const basePath = "/cornell"
 
-	router.Post(basePath, creationControllerFactory(
-		clientDB,
-		topic.GetRepository(clientDB),
-		subject.GetRepository(clientDB),
-		category.GetRepository(clientDB),
-		note.GetRepository(clientDB),
-	))
+	router.Post(basePath, controller.createOne)
 
-	router.Get(basePath, getAllCornellNoteControllerFactory(clientDB))
+	router.Get(basePath, controller.getAll)
+
+	router.Get(basePath+"/:id", controller.getOneById)
 }
