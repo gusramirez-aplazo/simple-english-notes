@@ -1,4 +1,8 @@
 ## All Changes
+8aef3377e00028412ec9ed2eab624f97a7fad783 feat: redo cornell note model
+
+4e07a34b871df7f25bd42af46a8542976a7e7391 chore: update changelog
+
 154f9029de631905b2f419c19edd810db51dff8d feat: add cors middleware
 
 856106fddeb607820aea187c65e16175bc3cdcac docs: update changelog
